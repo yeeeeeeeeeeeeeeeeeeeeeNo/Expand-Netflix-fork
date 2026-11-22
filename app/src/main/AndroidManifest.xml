@@ -6,10 +6,10 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
     <application
-        android:label="JewFlix"
+        android:label="NOIR"
         android:theme="@style/Theme.StreamFlix"
-        android:banner="@drawable/ic_jewflix"
-        android:icon="@drawable/ic_jewflix"
+        android:banner="@drawable/banner_noir"
+        android:icon="@drawable/ic_noir_logo"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:extractNativeLibs="true"

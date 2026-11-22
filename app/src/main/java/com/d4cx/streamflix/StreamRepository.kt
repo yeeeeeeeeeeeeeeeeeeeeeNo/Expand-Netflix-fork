@@ -9,10 +9,19 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
+import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 object StreamRepository {
     private const val TAG = "StreamRepository"
+    private const val CACHE_TTL_MS = 90_000L
+
+    private data class CachedStreams(val list: List<StreamItem>, val timestampMs: Long)
+    private val streamCache = ConcurrentHashMap<String, CachedStreams>()
+    private val racerPool = Executors.newFixedThreadPool(4)
 
     fun fetchStreams(
         type: String,
@@ -21,7 +30,18 @@ object StreamRepository {
         episode: Int? = null,
         context: Context? = null
     ): List<StreamItem> {
-        if(id.startsWith("arabic:"))return listOf(StreamItem(name="StarDima",title="Arabic provider",url="arabic-page:"+id.removePrefix("arabic:"),quality="Arabic",hasArabicHint=true,isDirect=true))
+        if (id.startsWith("arabic:")) {
+            return listOf(
+                StreamItem(
+                    name = "StarDima",
+                    title = "Arabic provider",
+                    url = "arabic-page:" + id.removePrefix("arabic:"),
+                    quality = "Arabic",
+                    hasArabicHint = true,
+                    isDirect = true
+                )
+            )
+        }
         val streamType = if (type.equals("anime", true)) "series" else type
         val queryId = if (streamType == "series") {
             if (id.startsWith("kitsu:")) {
@@ -37,39 +57,63 @@ object StreamRepository {
             id
         }
 
+        val cacheKey = "$streamType|$queryId"
+        streamCache[cacheKey]?.let { hit ->
+            if (System.currentTimeMillis() - hit.timestampMs < CACHE_TTL_MS && hit.list.isNotEmpty()) {
+                return hit.list
+            }
+        }
+
         val streams = mutableListOf<StreamItem>()
 
-        // 0. Sovereign Arabic Dub Archive for SpongeBob, Gumball, OTGW, Regular Show, Adventure Time, Courage
-        val arabicStreams = emptyList<StreamItem>()
-        streams.addAll(arabicStreams)
+        // 0. Sovereign Arabic Dub Archive (Instant Direct Streams)
+        streams.addAll(resolveArabicDubStreams(id, season, episode, type))
 
-        // 1. Primary configured Addon / Torrentio (supports custom URL or Real-Debrid config)
-        val baseUrl = if (context != null) {
+        // 1. Parallel Multi-Addon Stream Race (Primary + Comet + MediaFusion + Torrentio fallback!)
+        val primaryBase = if (context != null) {
             SettingsManager.getEffectiveAddonBaseUrl(context)
         } else {
             SettingsManager.DEFAULT_ADDON_URL
         }
-        val torrentioUrl = "$baseUrl/stream/$streamType/$queryId.json"
-        val jsonStr = httpGet(torrentioUrl, 5500)
-        if (jsonStr != null) {
-            parseStreamJson(jsonStr, streams)
+
+        val endpoints = linkedSetOf(
+            "$primaryBase/stream/$streamType/$queryId.json",
+            "https://comet.elfhosted.com/stream/$streamType/$queryId.json",
+            "https://mediafusion.elfhosted.com/stream/$streamType/$queryId.json"
+        )
+        if (primaryBase != SettingsManager.DEFAULT_ADDON_URL) {
+            endpoints.add("${SettingsManager.DEFAULT_ADDON_URL}/stream/$streamType/$queryId.json")
+        }
+        if (type == "series" || type == "anime") {
+            endpoints.add("https://anime-kitsu.strem.fun/stream/series/$queryId.json")
         }
 
-        // 2. Fallback to Torrentio public default if custom addon yielded zero streams
-        if (jsonStr == null && baseUrl != SettingsManager.DEFAULT_ADDON_URL) {
-            httpGet("${SettingsManager.DEFAULT_ADDON_URL}/stream/$streamType/$queryId.json", 4500)?.let {
-                parseStreamJson(it, streams)
+        val tasks = endpoints.map { ep ->
+            Callable<List<StreamItem>> {
+                val local = mutableListOf<StreamItem>()
+                httpGet(ep, 3800)?.let { parseStreamJson(it, local) }
+                local
             }
         }
-
-        // 3. Fallback for Anime Kitsu
-        if (streams.isEmpty() && (type == "series" || type == "anime")) {
-            httpGet("https://anime-kitsu.strem.fun/stream/series/$queryId.json", 4000)?.let {
-                parseStreamJson(it, streams)
+        try {
+            val futures = racerPool.invokeAll(tasks, 4200, TimeUnit.MILLISECONDS)
+            for (f in futures) {
+                if (!f.isCancelled) {
+                    runCatching { streams.addAll(f.get()) }
+                }
             }
+        } catch (e: Exception) {
+            Log.d(TAG, "Parallel race partial completion: ${e.message}")
         }
 
-        return streams.distinctBy { it.url ?: "${it.infoHash}:${it.fileIdx}" }.sortedByDescending { it.streamScore() + SourceHealth.score(context,it) }
+        val ranked = streams
+            .distinctBy { it.url ?: "${it.infoHash}:${it.fileIdx}" }
+            .sortedByDescending { it.streamScore() + SourceHealth.score(context, it) }
+
+        if (ranked.isNotEmpty()) {
+            streamCache[cacheKey] = CachedStreams(ranked, System.currentTimeMillis())
+        }
+        return ranked
     }
 
     private fun parseStreamJson(jsonStr: String, outList: MutableList<StreamItem>) {
@@ -435,7 +479,7 @@ object StreamRepository {
             conn.connectTimeout = timeoutMs
             conn.readTimeout = timeoutMs
             conn.instanceFollowRedirects = true
-            conn.setRequestProperty("User-Agent", "JewFlix/2.0 (Android TV)")
+            conn.setRequestProperty("User-Agent", "NOIR-TV/2.0 (Android TV)")
             conn.setRequestProperty("Accept", "application/json")
             if (conn.responseCode in 200..299) {
                 val reader = BufferedReader(InputStreamReader(conn.inputStream))

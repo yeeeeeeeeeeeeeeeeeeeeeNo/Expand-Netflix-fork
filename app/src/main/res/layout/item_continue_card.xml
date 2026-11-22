@@ -1,8 +1,64 @@
-<?xml version='1.0' encoding='utf-8'?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="196dp" android:layout_height="112dp" android:layout_marginEnd="12dp" android:focusable="true" android:clickable="true" android:background="@drawable/selector_poster_card" android:clipToOutline="true">
-  <ImageView android:id="@+id/cwBackdrop" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:contentDescription="Continue Watching" />
-  <View android:layout_width="match_parent" android:layout_height="56dp" android:layout_gravity="bottom" android:background="@drawable/bg_hero_scrim_bottom" />
-  <TextView android:id="@+id/cwLabelPill" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="top|start" android:layout_margin="8dp" android:maxWidth="176dp" android:background="#CC050507" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:text="Title" android:textColor="#F8FAFC" android:textSize="10sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
-  <TextView android:id="@+id/cwTimeLeft" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|end" android:layout_marginEnd="8dp" android:layout_marginBottom="9dp" android:text="11m left" android:textColor="#DDDDDD" android:textSize="10sp" android:textStyle="bold" />
-  <ProgressBar android:id="@+id/cwProgress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="3.5dp" android:layout_gravity="bottom" android:layout_marginStart="8dp" android:layout_marginEnd="8dp" android:layout_marginBottom="4dp" android:max="1000" android:progress="400" android:progressDrawable="@drawable/bg_resume_progress" />
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="212dp"
+    android:layout_height="120dp"
+    android:layout_marginEnd="12dp"
+    android:padding="2dp"
+    android:focusable="true"
+    android:clickable="true"
+    android:background="@drawable/selector_poster_card"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/cwBackdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:contentDescription="Continue Watching" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_hero_scrim_bottom" />
+
+    <TextView
+        android:id="@+id/cwLabelPill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="9dp"
+        android:layout_marginBottom="12dp"
+        android:maxWidth="148dp"
+        android:text="Title"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/cwTimeLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="9dp"
+        android:layout_marginBottom="12dp"
+        android:text="11m left"
+        android:textColor="#C8CCD4"
+        android:textSize="9.5sp"
+        android:textStyle="bold" />
+
+    <ProgressBar
+        android:id="@+id/cwProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3.5dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="5dp"
+        android:max="1000"
+        android:progress="400"
+        android:progressDrawable="@drawable/bg_resume_progress" />
 </FrameLayout>

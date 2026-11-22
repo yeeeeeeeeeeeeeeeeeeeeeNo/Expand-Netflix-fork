@@ -1,0 +1,4 @@
+-keep class com.d4cx.streamflix.** { *; }
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
+-dontwarn org.checkerframework.**

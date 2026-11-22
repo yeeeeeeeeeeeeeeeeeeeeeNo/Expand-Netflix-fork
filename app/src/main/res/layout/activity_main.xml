@@ -1,82 +1,638 @@
-<?xml version='1.0' encoding='utf-8'?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/obsidian_bg">
-  <LinearLayout android:id="@+id/mainShellContainer" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:background="@color/obsidian_bg">
-    <LinearLayout android:id="@+id/leftRail" android:layout_width="52dp" android:layout_height="match_parent" android:background="@color/rail_bg" android:orientation="vertical" android:gravity="center_horizontal" android:paddingTop="18dp" android:paddingBottom="18dp">
-      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="JewFlix" android:textColor="#FFFFFF" android:textSize="11.5sp" android:textStyle="bold" android:fontFamily="sans-serif-black" android:letterSpacing="-0.02" />
-      <View android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="0.55" />
-      <FrameLayout android:id="@+id/navRailHome" android:layout_width="46dp" android:layout_height="42dp" android:focusable="true" android:clickable="true" android:background="@drawable/bg_rail_icon">
-        <View android:id="@+id/navIndicatorHome" android:layout_width="3dp" android:layout_height="20dp" android:layout_gravity="start|center_vertical" android:layout_marginStart="2dp" android:background="@drawable/bg_active_indicator" />
-        <ImageView android:id="@+id/navIconHome" android:layout_width="19dp" android:layout_height="19dp" android:layout_gravity="center" android:src="@drawable/ic_nav_home" android:tint="#FFFFFF" android:contentDescription="Home" />
-      </FrameLayout>
-      <FrameLayout android:id="@+id/navRailSearch" android:layout_width="46dp" android:layout_height="42dp" android:layout_marginTop="10dp" android:focusable="true" android:clickable="true" android:background="@drawable/bg_rail_icon">
-        <View android:id="@+id/navIndicatorSearch" android:layout_width="3dp" android:layout_height="20dp" android:layout_gravity="start|center_vertical" android:layout_marginStart="2dp" android:background="@drawable/bg_active_indicator" android:visibility="gone" />
-        <ImageView android:id="@+id/navIconSearch" android:layout_width="19dp" android:layout_height="19dp" android:layout_gravity="center" android:src="@drawable/ic_nav_search" android:tint="#6E7687" android:contentDescription="Search" />
-      </FrameLayout>
-      <FrameLayout android:id="@+id/navRailCategories" android:layout_width="46dp" android:layout_height="42dp" android:layout_marginTop="10dp" android:focusable="true" android:clickable="true" android:background="@drawable/bg_rail_icon">
-        <View android:id="@+id/navIndicatorCategories" android:layout_width="3dp" android:layout_height="20dp" android:layout_gravity="start|center_vertical" android:layout_marginStart="2dp" android:background="@drawable/bg_active_indicator" android:visibility="gone" />
-        <ImageView android:id="@+id/navIconCategories" android:layout_width="19dp" android:layout_height="19dp" android:layout_gravity="center" android:src="@drawable/ic_nav_categories" android:tint="#6E7687" android:contentDescription="Categories" />
-      </FrameLayout>
-      <FrameLayout android:id="@+id/navRailLibrary" android:layout_width="46dp" android:layout_height="42dp" android:layout_marginTop="10dp" android:focusable="true" android:clickable="true" android:background="@drawable/bg_rail_icon">
-        <View android:id="@+id/navIndicatorLibrary" android:layout_width="3dp" android:layout_height="20dp" android:layout_gravity="start|center_vertical" android:layout_marginStart="2dp" android:background="@drawable/bg_active_indicator" android:visibility="gone" />
-        <ImageView android:id="@+id/navIconLibrary" android:layout_width="19dp" android:layout_height="19dp" android:layout_gravity="center" android:src="@drawable/ic_nav_library" android:tint="#6E7687" android:contentDescription="Library" />
-      </FrameLayout>
-      <FrameLayout android:id="@+id/navRailSettings" android:layout_width="46dp" android:layout_height="42dp" android:layout_marginTop="10dp" android:focusable="true" android:clickable="true" android:background="@drawable/bg_rail_icon">
-        <View android:id="@+id/navIndicatorSettings" android:layout_width="3dp" android:layout_height="20dp" android:layout_gravity="start|center_vertical" android:layout_marginStart="2dp" android:background="@drawable/bg_active_indicator" android:visibility="gone" />
-        <ImageView android:id="@+id/navIconSettings" android:layout_width="19dp" android:layout_height="19dp" android:layout_gravity="center" android:src="@drawable/ic_nav_settings" android:tint="#6E7687" android:contentDescription="Settings" />
-      </FrameLayout>
-      <View android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
-      <TextView android:id="@+id/tvEngineRailBadge" android:layout_width="28dp" android:layout_height="28dp" android:gravity="center" android:text="J" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" android:background="@drawable/bg_pill" />
-    </LinearLayout>
-    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#12151E" />
-    <FrameLayout android:id="@+id/screenHost" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1">
-      <FrameLayout android:id="@+id/screenHome" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000">
-        <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:scrollbars="none" android:fillViewport="true" android:paddingTop="24dp">
-          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="28dp">
-            <LinearLayout android:id="@+id/homeContinueSection" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="14dp" android:visibility="gone">
-              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="28dp" android:paddingBottom="8dp" android:text="Continue Watching" android:textColor="#F8FAFC" android:textSize="13sp" android:textStyle="bold" />
-              <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvHomeContinue" android:layout_width="match_parent" android:layout_height="120dp" android:paddingStart="28dp" android:paddingEnd="28dp" android:clipToPadding="false" />
-            </LinearLayout>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="14dp">
-              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="28dp" android:paddingBottom="8dp" android:text="Trending Movies" android:textColor="#F8FAFC" android:textSize="13sp" android:textStyle="bold" />
-              <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvHomeMovies" android:layout_width="match_parent" android:layout_height="174dp" android:paddingStart="28dp" android:paddingEnd="28dp" android:clipToPadding="false" />
-            </LinearLayout>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginBottom="14dp">
-              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="28dp" android:paddingBottom="8dp" android:text="Popular TV Series" android:textColor="#F8FAFC" android:textSize="13sp" android:textStyle="bold" />
-              <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvHomeSeries" android:layout_width="match_parent" android:layout_height="174dp" android:paddingStart="28dp" android:paddingEnd="28dp" android:clipToPadding="false" />
-            </LinearLayout>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
-              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="28dp" android:paddingBottom="8dp" android:text="Arabic Dub &amp; Cartoon Classics" android:textColor="#F8FAFC" android:textSize="13sp" android:textStyle="bold" />
-              <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvHomeCartoons" android:layout_width="match_parent" android:layout_height="174dp" android:paddingStart="28dp" android:paddingEnd="28dp" android:clipToPadding="false" />
-            </LinearLayout>
-          </LinearLayout>
-        </ScrollView>
-        <FrameLayout android:id="@+id/homeHeroContainer" android:layout_width="238dp" android:layout_height="match_parent" android:layout_gravity="end" android:background="#080808" android:visibility="gone">
-          <ImageView android:id="@+id/homeHeroBackdrop" android:layout_width="match_parent" android:layout_height="190dp" android:layout_gravity="top" android:scaleType="centerCrop" android:contentDescription="Hero Backdrop" android:alpha=".7" />
-          <View android:layout_width="540dp" android:layout_height="match_parent" android:layout_gravity="start" android:background="@drawable/bg_hero_scrim_left" android:visibility="gone" />
-          <View android:layout_width="match_parent" android:layout_height="120dp" android:layout_gravity="bottom" android:background="@drawable/bg_hero_scrim_bottom" android:visibility="gone" />
-          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="top" android:orientation="vertical" android:paddingStart="16dp" android:paddingBottom="16dp" android:layout_marginTop="204dp" android:paddingEnd="16dp">
-            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
-              <TextView android:id="@+id/homeHeroRating" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pill_gold" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="2.5dp" android:paddingBottom="2.5dp" android:text="★ 8.6" android:textColor="#DDDDDD" android:textSize="10sp" android:textStyle="bold" />
-              <TextView android:id="@+id/homeHeroYear" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="7dp" android:background="@drawable/bg_pill" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="2.5dp" android:paddingBottom="2.5dp" android:text="2024" android:textColor="#DDDDDD" android:textSize="10sp" android:textStyle="bold" />
-              <TextView android:id="@+id/homeHeroQuality" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="7dp" android:background="@drawable/bg_pill" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="2.5dp" android:paddingBottom="2.5dp" android:text="4K HDR" android:textColor="#DDDDDD" android:textSize="10sp" android:textStyle="bold" android:visibility="gone" />
-              <TextView android:id="@+id/homeHeroGenres" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:text="Featured Spotlight" android:textColor="#9CA3AF" android:textSize="10.5sp" android:maxLines="1" android:ellipsize="end" />
-            </LinearLayout>
-            <TextView android:id="@+id/homeHeroTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="FEATURED CINEMA" android:textColor="#FFFFFF" android:textSize="21sp" android:textStyle="bold" android:maxLines="3" android:ellipsize="end" />
-            <TextView android:id="@+id/homeHeroDesc" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Loading spotlight from Cinemeta catalog..." android:textColor="#CBD5E1" android:textSize="11sp" android:lineSpacingExtra="2dp" android:maxLines="6" android:ellipsize="end" />
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="14dp">
-              <TextView android:id="@+id/btnHomeWatch" android:layout_width="match_parent" android:layout_height="32dp" android:gravity="center" android:paddingStart="18dp" android:paddingEnd="18dp" android:background="@drawable/selector_pill_primary" android:text="▶  Play" android:textColor="#050507" android:textSize="11.5sp" android:textStyle="bold" android:focusable="true" android:clickable="true" android:layout_marginStart="0dp" android:layout_marginTop="8dp" />
-              <TextView android:id="@+id/btnHomeSources" android:layout_width="match_parent" android:layout_height="32dp" android:layout_marginStart="0dp" android:gravity="center" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/selector_pill_secondary" android:text="Details" android:textColor="#F8FAFC" android:textSize="11.5sp" android:textStyle="bold" android:focusable="true" android:clickable="true" android:layout_marginTop="8dp" />
-              <TextView android:id="@+id/btnHomeLibrary" android:layout_width="match_parent" android:layout_height="32dp" android:layout_marginStart="0dp" android:gravity="center" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/selector_pill_secondary" android:text="+ Library" android:textColor="#F8FAFC" android:textSize="11.5sp" android:textStyle="bold" android:focusable="true" android:clickable="true" android:layout_marginTop="8dp" />
-            </LinearLayout>
-          </LinearLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Main Shell: Floating Monochrome Netflix Top Nav + Full-Width Cinema Host -->
+    <LinearLayout
+        android:id="@+id/mainShellContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#000000">
+
+        <!-- Netflix 2025/2026 Monochrome Top Navigation Bar (Zero Left-Sidebar Trap!) -->
+        <LinearLayout
+            android:id="@+id/leftRail"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="#000000"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="34dp"
+            android:paddingEnd="34dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NOIR"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.14" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <!-- Home Tab -->
+            <FrameLayout
+                android:id="@+id/navRailHome"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:nextFocusRight="@+id/navRailSearch"
+                android:nextFocusDown="@+id/btnHomeWatch"
+                android:background="@drawable/bg_rail_icon">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <ImageView
+                        android:id="@+id/navIconHome"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:src="@drawable/ic_nav_home"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Home" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:text="Home"
+                        android:textColor="#F5F5F7"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/navIndicatorHome"
+                    android:layout_width="26dp"
+                    android:layout_height="2.5dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:background="@drawable/bg_active_indicator" />
+            </FrameLayout>
+
+            <!-- Search Tab -->
+            <FrameLayout
+                android:id="@+id/navRailSearch"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:nextFocusLeft="@+id/navRailHome"
+                android:nextFocusRight="@+id/navRailCategories"
+                android:background="@drawable/bg_rail_icon">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <ImageView
+                        android:id="@+id/navIconSearch"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:src="@drawable/ic_nav_search"
+                        android:tint="#787B85"
+                        android:contentDescription="Search" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:text="Search"
+                        android:textColor="#D0D2DA"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/navIndicatorSearch"
+                    android:layout_width="26dp"
+                    android:layout_height="2.5dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:background="@drawable/bg_active_indicator"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- Categories / Arabic Tab -->
+            <FrameLayout
+                android:id="@+id/navRailCategories"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:nextFocusLeft="@+id/navRailSearch"
+                android:nextFocusRight="@+id/navRailLibrary"
+                android:background="@drawable/bg_rail_icon">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <ImageView
+                        android:id="@+id/navIconCategories"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:src="@drawable/ic_nav_categories"
+                        android:tint="#787B85"
+                        android:contentDescription="Browse" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:text="Browse &amp; Arabic"
+                        android:textColor="#D0D2DA"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/navIndicatorCategories"
+                    android:layout_width="26dp"
+                    android:layout_height="2.5dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:background="@drawable/bg_active_indicator"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- My List / Library Tab -->
+            <FrameLayout
+                android:id="@+id/navRailLibrary"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:nextFocusLeft="@+id/navRailCategories"
+                android:nextFocusRight="@+id/navRailSettings"
+                android:background="@drawable/bg_rail_icon">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <ImageView
+                        android:id="@+id/navIconLibrary"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:src="@drawable/ic_nav_library"
+                        android:tint="#787B85"
+                        android:contentDescription="My List" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:text="My List"
+                        android:textColor="#D0D2DA"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/navIndicatorLibrary"
+                    android:layout_width="26dp"
+                    android:layout_height="2.5dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:background="@drawable/bg_active_indicator"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- Settings Tab -->
+            <FrameLayout
+                android:id="@+id/navRailSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:nextFocusLeft="@+id/navRailLibrary"
+                android:background="@drawable/bg_rail_icon">
+                <ImageView
+                    android:id="@+id/navIconSettings"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_nav_settings"
+                    android:tint="#787B85"
+                    android:contentDescription="Settings" />
+                <View
+                    android:id="@+id/navIndicatorSettings"
+                    android:layout_width="18dp"
+                    android:layout_height="2.5dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:background="@drawable/bg_active_indicator"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <!-- Live Engine Status Emblem -->
+            <TextView
+                android:id="@+id/tvEngineRailBadge"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:gravity="center"
+                android:text="N"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
+                android:background="@drawable/bg_pill" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#14FFFFFF" />
+
+        <!-- Full-Width Screen Host -->
+        <FrameLayout
+            android:id="@+id/screenHost"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <!-- TAB 0: MONOCHROME NETFLIX LIVING BILLBOARD + ROWS -->
+            <FrameLayout
+                android:id="@+id/screenHome"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#000000">
+
+                <ScrollView
+                    android:id="@+id/homeScrollView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="none"
+                    android:fillViewport="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingBottom="34dp">
+
+                        <!-- Iconic Full-Bleed Monochrome Netflix Hero Billboard -->
+                        <FrameLayout
+                            android:id="@+id/homeHeroContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="252dp"
+                            android:background="#000000">
+
+                            <ImageView
+                                android:id="@+id/homeHeroBackdrop"
+                                android:layout_width="680dp"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="end"
+                                android:scaleType="centerCrop"
+                                android:contentDescription="Hero Backdrop" />
+
+                            <View
+                                android:layout_width="540dp"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="start"
+                                android:background="@drawable/bg_hero_scrim_left" />
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="110dp"
+                                android:layout_gravity="bottom"
+                                android:background="@drawable/bg_hero_scrim_bottom" />
+
+                            <LinearLayout
+                                android:layout_width="490dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="bottom|start"
+                                android:orientation="vertical"
+                                android:paddingStart="34dp"
+                                android:paddingEnd="18dp"
+                                android:paddingBottom="18dp">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:layout_marginBottom="4dp">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="N"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        android:fontFamily="sans-serif-black" />
+                                    <TextView
+                                        android:id="@+id/homeHeroQuality"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:text="FEATURED · 4K HDR"
+                                        android:textColor="#B8BCC6"
+                                        android:textSize="9.5sp"
+                                        android:textStyle="bold"
+                                        android:letterSpacing="0.22" />
+                                </LinearLayout>
+
+                                <TextView
+                                    android:id="@+id/homeHeroTitle"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="NOIR CINEMA"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="30sp"
+                                    android:textStyle="bold"
+                                    android:fontFamily="sans-serif-black"
+                                    android:letterSpacing="-0.03"
+                                    android:maxLines="2"
+                                    android:ellipsize="end" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:layout_marginTop="6dp">
+                                    <TextView
+                                        android:id="@+id/homeHeroRating"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="★ 8.6"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold" />
+                                    <TextView
+                                        android:id="@+id/homeHeroYear"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="10dp"
+                                        android:background="@drawable/bg_pill"
+                                        android:paddingStart="7dp"
+                                        android:paddingEnd="7dp"
+                                        android:paddingTop="1.5dp"
+                                        android:paddingBottom="1.5dp"
+                                        android:text="2025"
+                                        android:textColor="#E5E5EA"
+                                        android:textSize="10sp"
+                                        android:textStyle="bold" />
+                                    <TextView
+                                        android:id="@+id/homeHeroGenres"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="10dp"
+                                        android:text="Cinema Spotlight"
+                                        android:textColor="#A0A4AE"
+                                        android:textSize="11sp"
+                                        android:maxLines="1"
+                                        android:ellipsize="end" />
+                                </LinearLayout>
+
+                                <TextView
+                                    android:id="@+id/homeHeroDesc"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:text="Loading spotlight..."
+                                    android:textColor="#C8CCD4"
+                                    android:textSize="11.5sp"
+                                    android:lineSpacingExtra="2dp"
+                                    android:maxLines="2"
+                                    android:ellipsize="end" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:layout_marginTop="12dp">
+                                    <TextView
+                                        android:id="@+id/btnHomeWatch"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="34dp"
+                                        android:gravity="center"
+                                        android:paddingStart="22dp"
+                                        android:paddingEnd="22dp"
+                                        android:background="@drawable/selector_pill_primary"
+                                        android:text="▶  Play"
+                                        android:textColor="#000000"
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        android:focusable="true"
+                                        android:clickable="true"
+                                        android:nextFocusUp="@+id/navRailHome"
+                                        android:nextFocusRight="@+id/btnHomeSources" />
+                                    <TextView
+                                        android:id="@+id/btnHomeSources"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="34dp"
+                                        android:layout_marginStart="10dp"
+                                        android:gravity="center"
+                                        android:paddingStart="18dp"
+                                        android:paddingEnd="18dp"
+                                        android:background="@drawable/selector_pill_secondary"
+                                        android:text="More Info"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        android:focusable="true"
+                                        android:clickable="true"
+                                        android:nextFocusUp="@+id/navRailHome"
+                                        android:nextFocusLeft="@+id/btnHomeWatch"
+                                        android:nextFocusRight="@+id/btnHomeLibrary" />
+                                    <TextView
+                                        android:id="@+id/btnHomeLibrary"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="34dp"
+                                        android:layout_marginStart="10dp"
+                                        android:gravity="center"
+                                        android:paddingStart="16dp"
+                                        android:paddingEnd="16dp"
+                                        android:background="@drawable/selector_pill_secondary"
+                                        android:text="+ My List"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        android:focusable="true"
+                                        android:clickable="true"
+                                        android:nextFocusUp="@+id/navRailHome"
+                                        android:nextFocusLeft="@+id/btnHomeSources" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </FrameLayout>
+
+                        <!-- Continue Watching Row -->
+                        <LinearLayout
+                            android:id="@+id/homeContinueSection"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginBottom="16dp"
+                            android:visibility="gone">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingStart="34dp"
+                                android:paddingBottom="8dp"
+                                android:text="Continue Watching"
+                                android:textColor="#FFFFFF"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/rvHomeContinue"
+                                android:layout_width="match_parent"
+                                android:layout_height="128dp"
+                                android:paddingStart="34dp"
+                                android:paddingEnd="34dp"
+                                android:clipToPadding="false" />
+                        </LinearLayout>
+
+                        <!-- Trending Movies Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginBottom="16dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingStart="34dp"
+                                android:paddingBottom="8dp"
+                                android:text="Top Films on NOIR"
+                                android:textColor="#FFFFFF"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/rvHomeMovies"
+                                android:layout_width="match_parent"
+                                android:layout_height="184dp"
+                                android:paddingStart="34dp"
+                                android:paddingEnd="34dp"
+                                android:clipToPadding="false" />
+                        </LinearLayout>
+
+                        <!-- Popular Series Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginBottom="16dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingStart="34dp"
+                                android:paddingBottom="8dp"
+                                android:text="Trending Series"
+                                android:textColor="#FFFFFF"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/rvHomeSeries"
+                                android:layout_width="match_parent"
+                                android:layout_height="184dp"
+                                android:paddingStart="34dp"
+                                android:paddingEnd="34dp"
+                                android:clipToPadding="false" />
+                        </LinearLayout>
+
+                        <!-- Arabic Dub & Classics Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingStart="34dp"
+                                android:paddingBottom="8dp"
+                                android:text="Arabic Dub &amp; Classics"
+                                android:textColor="#FFFFFF"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/rvHomeCartoons"
+                                android:layout_width="match_parent"
+                                android:layout_height="184dp"
+                                android:paddingStart="34dp"
+                                android:paddingEnd="34dp"
+                                android:clipToPadding="false" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </ScrollView>
+            </FrameLayout>
+
+            <ViewStub android:id="@+id/stubSearch" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_search" />
+            <ViewStub android:id="@+id/stubCategories" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_categories" />
+            <ViewStub android:id="@+id/stubLibrary" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_library" />
+            <ViewStub android:id="@+id/stubSettings" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_settings" />
         </FrameLayout>
-      </FrameLayout>
-      <ViewStub android:id="@+id/stubSearch" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_search" />
-      <ViewStub android:id="@+id/stubCategories" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_categories" />
-      <ViewStub android:id="@+id/stubLibrary" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_library" />
-      <ViewStub android:id="@+id/stubSettings" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_settings" />
+    </LinearLayout>
+
+    <ViewStub android:id="@+id/stubDetailMovie" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_detail_movie" />
+    <ViewStub android:id="@+id/stubDetailSeries" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_detail_series" />
+
+    <!-- Cinematic Netflix-Style Monochrome NOIR First-Boot Intro Overlay -->
+    <FrameLayout
+        android:id="@+id/noirBootOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:elevation="40dp"
+        android:clickable="true"
+        android:focusable="false">
+
+        <View
+            android:id="@+id/noirBootBeam"
+            android:layout_width="3dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center"
+            android:background="#FFFFFF"
+            android:alpha="0" />
+
+        <LinearLayout
+            android:id="@+id/noirBootWordmark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:alpha="0">
+            <TextView
+                android:id="@+id/noirBootTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NOIR"
+                android:textColor="#FFFFFF"
+                android:textSize="62sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.34" />
+            <TextView
+                android:id="@+id/noirBootSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="CINEMA"
+                android:textColor="#88FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.55" />
+        </LinearLayout>
     </FrameLayout>
-  </LinearLayout>
-  <ViewStub android:id="@+id/stubDetailMovie" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_detail_movie" />
-  <ViewStub android:id="@+id/stubDetailSeries" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_detail_series" />
 </FrameLayout>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M0,0h320v180h-320z" />
+    <!-- Subtle architectural hairline frame -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#22FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M14,14h292v152h-292z" />
+    <!-- Monumental N emblem centered left -->
+    <path
+        android:fillColor="#99FFFFFF"
+        android:pathData="M64,46h16v88h-16z" />
+    <path
+        android:fillColor="#99FFFFFF"
+        android:pathData="M114,46h16v88h-16z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M64,46h17l49,88h-17z" />
+    <!-- O I R geometric wordmark bars -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="11"
+        android:pathData="M158,64a26,26 0 1,0 0,52a26,26 0 1,0 0,-52z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M202,56h12v68h-12z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M230,56h12v68h-12z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="11"
+        android:pathData="M236,62h16c10,0 16,6 16,15c0,9 -6,15 -16,15h-16" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M250,92h13l14,32h-13z" />
+</vector>

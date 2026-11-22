@@ -23,7 +23,8 @@ data class ChipOption(
 class ContinueWatchingAdapter(
     private var items: List<ContinueWatchingItem>,
     private val onClick: (ContinueWatchingItem) -> Unit,
-    private val onLongRemove: (ContinueWatchingItem) -> Unit
+    private val onLongRemove: (ContinueWatchingItem) -> Unit,
+    private val onFocused: ((ContinueWatchingItem) -> Unit)? = null
 ) : RecyclerView.Adapter<ContinueWatchingAdapter.VH>() {
 
     private val interpolator = DecelerateInterpolator(1.5f)
@@ -67,11 +68,12 @@ class ContinueWatchingAdapter(
         ImageLoader.load(item.backdrop.ifEmpty { item.poster }, holder.backdrop, 420, 236)
 
         holder.view.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) onFocused?.invoke(item)
             v.animate()
-                .scaleX(if (hasFocus) 1.015f else 1f)
-                .scaleY(if (hasFocus) 1.015f else 1f)
-                .translationZ(if (hasFocus) 10f else 0f)
-                .setDuration(130)
+                .scaleX(if (hasFocus) 1.06f else 1f)
+                .scaleY(if (hasFocus) 1.06f else 1f)
+                .translationZ(if (hasFocus) 12f else 0f)
+                .setDuration(140)
                 .setInterpolator(interpolator)
                 .start()
         }
@@ -142,10 +144,10 @@ class ShelfPosterAdapter(
                 onFocused?.invoke(item, holder.bindingAdapterPosition.coerceAtLeast(0))
             }
             v.animate()
-                .scaleX(if (hasFocus) 1.015f else 1f)
-                .scaleY(if (hasFocus) 1.015f else 1f)
-                .translationZ(if (hasFocus) 10f else 0f)
-                .setDuration(130)
+                .scaleX(if (hasFocus) 1.065f else 1f)
+                .scaleY(if (hasFocus) 1.065f else 1f)
+                .translationZ(if (hasFocus) 12f else 0f)
+                .setDuration(140)
                 .setInterpolator(interpolator)
                 .start()
         }
@@ -202,10 +204,10 @@ class CatalogAdapter(
 
         holder.view.setOnFocusChangeListener { v, hasFocus ->
             v.animate()
-                .scaleX(if (hasFocus) 1.015f else 1f)
-                .scaleY(if (hasFocus) 1.015f else 1f)
-                .translationZ(if (hasFocus) 10f else 0f)
-                .setDuration(130)
+                .scaleX(if (hasFocus) 1.06f else 1f)
+                .scaleY(if (hasFocus) 1.06f else 1f)
+                .translationZ(if (hasFocus) 12f else 0f)
+                .setDuration(140)
                 .setInterpolator(interpolator)
                 .start()
         }

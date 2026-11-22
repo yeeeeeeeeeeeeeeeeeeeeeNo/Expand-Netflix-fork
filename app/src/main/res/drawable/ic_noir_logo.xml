@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M0,0h108v108h-108z" />
+    <path
+        android:fillColor="#1A1A1D"
+        android:pathData="M6,6h96v96h-96z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2E2E33" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M8,8h92v92h-92z" />
+    <!-- Iconic Minimalist Monochrome N Ribbon -->
+    <path
+        android:fillColor="#88FFFFFF"
+        android:pathData="M28,22h13v64h-13z" />
+    <path
+        android:fillColor="#88FFFFFF"
+        android:pathData="M67,22h13v64h-13z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,22h14l38,64h-14z" />
+</vector>

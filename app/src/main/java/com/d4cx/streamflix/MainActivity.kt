@@ -77,6 +77,9 @@ class MainActivity : Activity() {
     private lateinit var homeSeriesAdapter: ShelfPosterAdapter
     private lateinit var homeCartoonsAdapter: ShelfPosterAdapter
     private var homeHeroItem: CatalogItem? = null
+    private var heroDebounceRunnable: Runnable? = null
+    private var lanSearchServer: LanSearchServer? = null
+    private var tvLanSearchHint: TextView? = null
 
     // Search Views
     private lateinit var inputSearch: EditText
@@ -212,14 +215,95 @@ class MainActivity : Activity() {
         setupLeftRail()
         setupHomeScreen()
         startEngineAndTelemetry()
+        startLanSearchServer()
         switchTab(0, focusContent = false)
         loadHomeContent()
+        playCinematicBootIntro()
+    }
 
-        btnHomeWatch.postDelayed({
-            if (currentTabIndex == 0 && detailMovieOverlay?.visibility != View.VISIBLE && detailSeriesOverlay?.visibility != View.VISIBLE) {
-                btnHomeWatch.requestFocus()
+    private fun playCinematicBootIntro() {
+        val overlay = findViewById<View?>(R.id.noirBootOverlay) ?: return
+        val beam = findViewById<View?>(R.id.noirBootBeam)
+        val wordmark = findViewById<View?>(R.id.noirBootWordmark)
+
+        overlay.visibility = View.VISIBLE
+        overlay.alpha = 1f
+
+        // Phase 1: Vertical cinema light aperture slit expands cleanly
+        beam?.apply {
+            alpha = 0f
+            scaleX = 1f
+            scaleY = 0.08f
+            animate()
+                .alpha(1f)
+                .scaleY(1.25f)
+                .setDuration(260)
+                .withEndAction {
+                    animate()
+                        .scaleX(24f)
+                        .alpha(0f)
+                        .setDuration(340)
+                        .start()
+                }
+                .start()
+        }
+
+        // Phase 2: Monumental NOIR wordmark materializes with Netflix-style optical zoom
+        wordmark?.apply {
+            alpha = 0f
+            scaleX = 0.86f
+            scaleY = 0.86f
+            animate()
+                .alpha(1f)
+                .scaleX(1.0f)
+                .scaleY(1.0f)
+                .setStartDelay(210)
+                .setDuration(420)
+                .setInterpolator(android.view.animation.DecelerateInterpolator(2.0f))
+                .withEndAction {
+                    // Phase 3: Smooth cinema zoom-dissolve into live Hero Billboard
+                    animate()
+                        .scaleX(1.18f)
+                        .scaleY(1.18f)
+                        .alpha(0f)
+                        .setStartDelay(460)
+                        .setDuration(320)
+                        .start()
+                    overlay.animate()
+                        .alpha(0f)
+                        .setStartDelay(520)
+                        .setDuration(300)
+                        .withEndAction {
+                            overlay.visibility = View.GONE
+                            if (currentTabIndex == 0 && detailMovieOverlay?.visibility != View.VISIBLE && detailSeriesOverlay?.visibility != View.VISIBLE) {
+                                btnHomeWatch.requestFocus()
+                            }
+                        }
+                        .start()
+                }
+                .start()
+        }
+    }
+
+    private fun startLanSearchServer() {
+        val srv = LanSearchServer { query ->
+            mainHandler.post {
+                if (isFinishing || isDestroyed) return@post
+                if (detailMovieOverlay?.visibility == View.VISIBLE) closeMovieDetail()
+                if (detailSeriesOverlay?.visibility == View.VISIBLE) closeSeriesDetail()
+                switchTab(1, focusContent = false)
+                inputSearch.setText(query)
+                inputSearch.setSelection(query.length)
+                Toast.makeText(this, "Phone search: $query", Toast.LENGTH_SHORT).show()
             }
-        }, 120)
+        }
+        srv.start()
+        lanSearchServer = srv
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        ImageLoader.trimMemory()
     }
 
     private fun startEngineAndTelemetry() {
@@ -306,6 +390,8 @@ class MainActivity : Activity() {
         topMatchDesc = root.findViewById(R.id.topMatchDesc)
         rvSearchResults = root.findViewById(R.id.rvSearchResults)
         tvSearchStatus = root.findViewById(R.id.tvSearchStatus)
+        tvLanSearchHint = root.findViewById(R.id.tvLanSearchHint)
+        tvLanSearchHint?.text = "Phone Keyboard\n${lanSearchServer?.getDisplayAddress() ?: "http://tv-ip:8812"}"
     }
 
     private fun ensureCategoriesInflated(): View {
@@ -554,6 +640,19 @@ class MainActivity : Activity() {
                 WatchHistoryManager.removeFromContinueWatching(this, cw.id)
                 refreshContinueWatching()
                 Toast.makeText(this, "Removed from Continue Watching", Toast.LENGTH_SHORT).show()
+            },
+            onFocused = { cw ->
+                scheduleHeroSpotlightUpdate(
+                    CatalogItem(
+                        id = cw.id,
+                        name = cw.title,
+                        type = cw.type,
+                        year = if (cw.type.equals("series", true)) "S${cw.season} · E${cw.episode}" else "Resume",
+                        poster = cw.poster,
+                        backdrop = cw.backdrop.ifEmpty { cw.poster },
+                        description = cw.episodeTitle.ifEmpty { "Resume right where you left off." }
+                    )
+                )
             }
         )
         rvHomeContinue.adapter = continueAdapter
@@ -561,18 +660,24 @@ class MainActivity : Activity() {
         rvHomeMovies.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         homeMoviesAdapter = ShelfPosterAdapter(emptyList(), false, { item ->
             handleCatalogItemClick(item)
+        }, onFocused = { item, _ ->
+            scheduleHeroSpotlightUpdate(item)
         })
         rvHomeMovies.adapter = homeMoviesAdapter
 
         rvHomeSeries.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         homeSeriesAdapter = ShelfPosterAdapter(emptyList(), false, { item ->
             handleCatalogItemClick(item)
+        }, onFocused = { item, _ ->
+            scheduleHeroSpotlightUpdate(item)
         })
         rvHomeSeries.adapter = homeSeriesAdapter
 
         rvHomeCartoons.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         homeCartoonsAdapter = ShelfPosterAdapter(emptyList(), false, { item ->
             handleCatalogItemClick(item)
+        }, onFocused = { item, _ ->
+            scheduleHeroSpotlightUpdate(item)
         })
         rvHomeCartoons.adapter = homeCartoonsAdapter
 
@@ -661,28 +766,36 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun scheduleHeroSpotlightUpdate(item: CatalogItem) {
+        if (homeHeroItem?.id == item.id) return
+        heroDebounceRunnable?.let { mainHandler.removeCallbacks(it) }
+        val r = Runnable { bindHomeHero(item) }
+        heroDebounceRunnable = r
+        mainHandler.postDelayed(r, 140L)
+    }
+
     private fun bindHomeHero(item: CatalogItem) {
         homeHeroItem = item
         homeHeroTitle.text = item.name.substringBefore(" (").uppercase(Locale.US)
-        homeHeroRating.text = "★ ${item.imdbRating ?: "8.4"}"
+        homeHeroRating.text = "★ ${item.imdbRating ?: "8.5"}"
         homeHeroYear.text = item.year.ifEmpty { "Featured" }
-        homeHeroQuality.text = if (item.type.equals("movie", true)) "4K HDR" else "SERIES"
+        homeHeroQuality.text = if (item.type.equals("movie", true)) "FILM · 4K HDR" else "SERIES · 4K HDR"
         homeHeroGenres.text = if (item.genres.isNotEmpty()) {
-            item.genres.take(3).joinToString(" • ")
+            item.genres.take(3).joinToString(" · ")
         } else {
-            "Featured Spotlight"
+            "NOIR Spotlight"
         }
         homeHeroDesc.text = item.description?.ifEmpty { null }
-            ?: "Instant torrent and Debrid streaming ready in 4K HDR."
+            ?: "Parallel multi-addon streaming in crisp 4K HDR."
         syncHeroLibraryButton(WatchHistoryManager.isInLibrary(this, item.id))
 
         val bgUrl = item.backdrop?.ifEmpty { null }
             ?: if (item.id.startsWith("tt")) "https://images.metahub.space/background/medium/${item.id}/img" else item.poster
-        ImageLoader.load(bgUrl, homeHeroBackdrop, 960, 540, keepPreviousWhileLoading = true)
+        ImageLoader.load(bgUrl, homeHeroBackdrop, 840, 472, keepPreviousWhileLoading = true)
     }
 
     private fun syncHeroLibraryButton(inLib: Boolean) {
-        btnHomeLibrary.text = if (inLib) "✓ In Library" else "+ Library"
+        btnHomeLibrary.text = if (inLib) "✓ In My List" else "+ My List"
     }
 
     private fun refreshContinueWatching() {
@@ -2088,6 +2201,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        lanSearchServer?.stop()
         activeSearchFuture?.cancel(true)
         activeCatalogFuture?.cancel(true)
         activeMovieStreamsFuture?.cancel(true)

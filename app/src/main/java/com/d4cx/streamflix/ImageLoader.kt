@@ -7,41 +7,56 @@ import android.os.Handler
 import android.os.Looper
 import android.util.LruCache
 import android.widget.ImageView
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
+/**
+ * Low-RAM RGB_565 Image Pipeline tuned for 1.78 GB ARMv7 Android TV.
+ * - Lean 16 MB bitmap LRU + 24 MB disk cache
+ * - In-flight request deduplication (prevents duplicate network fetches while fast-scrolling D-pad!)
+ * - Pure RGB_565 decode (50% lower VRAM/RAM vs ARGB_8888)
+ */
 object ImageLoader {
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val executor = Executors.newFixedThreadPool(5)
+    private val executor = Executors.newFixedThreadPool(6)
+    private val inFlight = ConcurrentHashMap.newKeySet<String>()
 
-    private const val DISK_CACHE_MAX_BYTES = 28L * 1024L * 1024L
+    private const val DISK_CACHE_MAX_BYTES = 24L * 1024L * 1024L
     @Volatile
     private var diskCacheDir: File? = null
 
     private val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
-    private val cacheSize = (maxMemory / 8).coerceIn(16384, 32768)
+    private val cacheSize = (maxMemory / 10).coerceIn(8192, 16384)
 
     private val memoryCache = object : LruCache<String, Bitmap>(cacheSize) {
-        override fun sizeOf(key: String, bitmap: Bitmap): Int {
-            return bitmap.byteCount / 1024
-        }
+        override fun sizeOf(key: String, bitmap: Bitmap): Int = bitmap.byteCount / 1024
     }
 
     fun init(context: Context) {
         val dir = File(context.applicationContext.cacheDir, "img_cache")
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
+        if (!dir.exists()) dir.mkdirs()
         diskCacheDir = dir
         executor.execute { trimDiskCache() }
     }
 
-    fun load(url: String?, imageView: ImageView, reqWidth: Int = 300, reqHeight: Int = 450, keepPreviousWhileLoading: Boolean = false) {
+    fun trimMemory() {
+        runCatching { memoryCache.trimToSize(cacheSize / 2) }
+    }
+
+    fun load(
+        url: String?,
+        imageView: ImageView,
+        reqWidth: Int = 300,
+        reqHeight: Int = 450,
+        keepPreviousWhileLoading: Boolean = false
+    ) {
         if (url.isNullOrEmpty()) {
             imageView.tag = null
             imageView.setImageDrawable(null)
@@ -49,7 +64,6 @@ object ImageLoader {
         }
 
         imageView.tag = url
-
         val memKey = "${reqWidth}x${reqHeight}_$url"
         val cached = memoryCache.get(memKey)
         if (cached != null && !cached.isRecycled) {
@@ -71,11 +85,13 @@ object ImageLoader {
                     mainHandler.post {
                         if (imageView.tag == url) {
                             if (keepPreviousWhileLoading) {
+                                imageView.alpha = 0.72f
                                 imageView.setImageBitmap(bitmap)
+                                imageView.animate().alpha(1f).setDuration(150).start()
                             } else {
                                 imageView.alpha = 0f
                                 imageView.setImageBitmap(bitmap)
-                                imageView.animate().alpha(1f).setDuration(140).start()
+                                imageView.animate().alpha(1f).setDuration(110).start()
                             }
                         }
                     }
@@ -84,16 +100,19 @@ object ImageLoader {
         }
     }
 
-    fun preload(url: String?, reqWidth: Int = 960, reqHeight: Int = 540) {
+    fun preload(url: String?, reqWidth: Int = 800, reqHeight: Int = 450) {
         if (url.isNullOrEmpty()) return
         val memKey = "${reqWidth}x${reqHeight}_$url"
-        if (memoryCache.get(memKey) != null) return
+        if (memoryCache.get(memKey) != null || !inFlight.add(memKey)) return
         executor.execute {
             try {
                 loadFromDiskOrNetwork(url, reqWidth, reqHeight)?.let { bmp ->
                     memoryCache.put(memKey, bmp)
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            } finally {
+                inFlight.remove(memKey)
+            }
         }
     }
 
@@ -109,21 +128,24 @@ object ImageLoader {
 
         var connection: HttpURLConnection? = null
         return try {
-            val url = URL(urlString)
-            connection = url.openConnection() as HttpURLConnection
-            connection.connectTimeout = 4500
-            connection.readTimeout = 4500
-            connection.instanceFollowRedirects = true
-            connection.useCaches = true
-            connection.setRequestProperty("User-Agent", "JewFlix-Native/2.0")
-
-            if (connection.responseCode !in 200..299) {
-                return null
+            connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 3800
+                readTimeout = 4200
+                instanceFollowRedirects = true
+                useCaches = true
+                setRequestProperty("User-Agent", "NOIR-TV/2.0")
             }
+            if (connection.responseCode !in 200..299) return null
 
             val bytes = connection.inputStream.use { input ->
-                val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192)
-                while(true){val n=input.read(buffer);if(n<0)break;if(out.size()+n>6*1024*1024)return null;out.write(buffer,0,n)}
+                val out = ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val n = input.read(buffer)
+                    if (n < 0) break
+                    if (out.size() + n > 5 * 1024 * 1024) return null
+                    out.write(buffer, 0, n)
+                }
                 out.toByteArray()
             }
             if (bytes.isEmpty()) return null
@@ -131,9 +153,9 @@ object ImageLoader {
             if (diskFile != null && bytes.size < 2 * 1024 * 1024) {
                 try {
                     synchronized(this) {
-                        val temp=File(diskFile.parentFile,diskFile.name+".tmp")
+                        val temp = File(diskFile.parentFile, diskFile.name + ".tmp")
                         FileOutputStream(temp).use { it.write(bytes) }
-                        if(!temp.renameTo(diskFile))temp.delete()
+                        if (!temp.renameTo(diskFile)) temp.delete()
                         trimDiskCache()
                     }
                 } catch (_: Exception) {}
@@ -162,7 +184,6 @@ object ImageLoader {
         val height = options.outHeight
         val width = options.outWidth
         var inSampleSize = 1
-
         if (height > reqHeight || width > reqWidth) {
             val halfHeight = height / 2
             val halfWidth = width / 2

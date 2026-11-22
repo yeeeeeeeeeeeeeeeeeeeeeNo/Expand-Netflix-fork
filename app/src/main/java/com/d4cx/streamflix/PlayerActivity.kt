@@ -73,6 +73,7 @@ class PlayerActivity : Activity() {
     private lateinit var tvTimeCurrent: TextView
     private lateinit var tvTimeDuration: TextView
     private lateinit var tvSeekOsd: TextView
+    private lateinit var btnSkipIntro: TextView
     private lateinit var layoutBuffering: View
     private lateinit var tvBufferingStatus: TextView
     private lateinit var menuOverlay: View
@@ -107,7 +108,11 @@ class PlayerActivity : Activity() {
     private var openSubtitlesList: List<SubtitleItem> = emptyList()
     private var activeSubtitleId: String? = null
     private var activeSubtitleLang: String? = null
+    private var activeOpenSubtitleItem: SubtitleItem? = null
+    private var activeSubtitleOffsetMs: Long = 0L
     private var hasAutoSelectedAudio = false
+    private var introSkipped = false
+    private var hasPrewarmedNextEp = false
 
     private var broadcastItems:List<ArabicBroadcast> = emptyList()
     private var broadcastIndex=0
@@ -191,6 +196,27 @@ class PlayerActivity : Activity() {
                 tvTimeCurrent.text = formatTime(position)
                 tvTimeDuration.text = formatTime(duration)
 
+                // Show Netflix Monochrome SKIP INTRO pill during opening window on series/anime
+                val isSeries = !mediaType.equals("movie", true) && broadcastItems.isEmpty()
+                val showSkip = isSeries && !introSkipped && duration > 180_000L && position in 12_000L..155_000L && menuOverlay.visibility != View.VISIBLE
+                if (showSkip && btnSkipIntro.visibility != View.VISIBLE) {
+                    btnSkipIntro.alpha = 0f
+                    btnSkipIntro.visibility = View.VISIBLE
+                    btnSkipIntro.animate().alpha(1f).setDuration(220).start()
+                } else if (!showSkip && btnSkipIntro.visibility == View.VISIBLE) {
+                    btnSkipIntro.visibility = View.GONE
+                }
+
+                // Silently pre-warm Episode N+1 streams in background during last 90 seconds!
+                if (isSeries && !hasPrewarmedNextEp && duration > 120_000L && (duration - position) <= 90_000L) {
+                    hasPrewarmedNextEp = true
+                    backgroundExecutor.execute {
+                        runCatching {
+                            StreamRepository.fetchStreams(mediaType, mediaId, seasonNum, episodeNum + 1, this@PlayerActivity)
+                        }
+                    }
+                }
+
                 val now = System.currentTimeMillis()
                 if (now - lastSavedProgressMs >= 4000L && position > 0) {
                     lastSavedProgressMs = now
@@ -228,7 +254,7 @@ class PlayerActivity : Activity() {
 
         mediaType = intent.getStringExtra(EXTRA_MEDIA_TYPE) ?: "series"
         mediaId = intent.getStringExtra(EXTRA_MEDIA_ID) ?: ""
-        mediaTitle = intent.getStringExtra(EXTRA_TITLE) ?: "JewFlix Player"
+        mediaTitle = intent.getStringExtra(EXTRA_TITLE) ?: "NOIR"
         findViewById<TitleLoadingView>(R.id.loadingTitle).text=mediaTitle.substringBefore(" — ")
         mediaPoster = intent.getStringExtra(EXTRA_POSTER) ?: ""
         mediaBackdrop = intent.getStringExtra(EXTRA_BACKDROP) ?: ""
@@ -308,6 +334,15 @@ class PlayerActivity : Activity() {
         tvTimeCurrent = findViewById(R.id.tvTimeCurrent)
         tvTimeDuration = findViewById(R.id.tvTimeDuration)
         tvSeekOsd = findViewById(R.id.tvSeekOsd)
+        btnSkipIntro = findViewById(R.id.btnSkipIntro)
+        btnSkipIntro.setOnClickListener {
+            val p = player ?: return@setOnClickListener
+            introSkipped = true
+            btnSkipIntro.visibility = View.GONE
+            val target = (p.currentPosition + 85_000L).coerceAtMost((p.duration - 5_000L).coerceAtLeast(0L))
+            p.seekTo(target)
+            showSeekOsd("Skipped Intro (+1:25)")
+        }
         layoutBuffering = findViewById(R.id.layoutBuffering)
         tvBufferingStatus = findViewById(R.id.tvBufferingStatus)
         menuOverlay = findViewById(R.id.menuOverlay)
@@ -1190,6 +1225,27 @@ class PlayerActivity : Activity() {
             showSubtitleCustomizationMenu()
         })
 
+        activeOpenSubtitleItem?.let { curSub ->
+            val offSec = String.format(Locale.US, "%+.1fs", activeSubtitleOffsetMs / 1000.0)
+            options.add(MenuOption("⏱ Sync -0.5s  (Current: $offSec)") {
+                activeSubtitleOffsetMs -= 500L
+                applyOpenSubtitle(curSub)
+                closeMenu()
+            })
+            options.add(MenuOption("⏱ Sync +0.5s  (Current: $offSec)") {
+                activeSubtitleOffsetMs += 500L
+                applyOpenSubtitle(curSub)
+                closeMenu()
+            })
+            if (activeSubtitleOffsetMs != 0L) {
+                options.add(MenuOption("⏱ Reset Subtitle Sync (0.0s)") {
+                    activeSubtitleOffsetMs = 0L
+                    applyOpenSubtitle(curSub)
+                    closeMenu()
+                })
+            }
+        }
+
         options.add(MenuOption("Subtitles Off", isSelected = activeSubtitleId == "off") {
             p.trackSelectionParameters = p.trackSelectionParameters
                 .buildUpon()
@@ -1257,22 +1313,29 @@ class PlayerActivity : Activity() {
                 else -> "srt"
             }
             val safeId = sub.id.replace(Regex("[^a-zA-Z0-9_-]"), "")
-            val cacheSubFile = File(cacheDir, "sub_${safeId}.$ext")
+            val rawCacheFile = File(cacheDir, "sub_raw_${safeId}.$ext")
+            val syncedSubFile = File(cacheDir, "sub_${safeId}_off_${activeSubtitleOffsetMs}.$ext")
             var fileReady = false
             try {
-                if (!cacheSubFile.exists() || cacheSubFile.length() == 0L) {
+                if (!rawCacheFile.exists() || rawCacheFile.length() == 0L) {
                     val conn = URL(sub.url).openConnection() as HttpURLConnection
                     conn.connectTimeout = 5000
                     conn.readTimeout = 5000
-                    conn.setRequestProperty("User-Agent", "JewFlix/2.0 (Android TV)")
+                    conn.setRequestProperty("User-Agent", "NOIR-TV/2.0 (Android TV)")
                     if (conn.responseCode in 200..299) {
                         conn.inputStream.use { input ->
-                            FileOutputStream(cacheSubFile).use { output -> input.copyTo(output) }
+                            FileOutputStream(rawCacheFile).use { output -> input.copyTo(output) }
                         }
                     }
                     conn.disconnect()
                 }
-                fileReady = cacheSubFile.exists() && cacheSubFile.length() > 0
+                if (rawCacheFile.exists() && rawCacheFile.length() > 0L) {
+                    // Auto-repair Arabic Windows-1256 -> UTF-8 + apply live subtitle sync offset!
+                    val utf8 = SubtitleRepository.decodeSubtitleBytesToUtf8(rawCacheFile.readBytes(), sub.langCode)
+                    val shifted = SubtitleRepository.shiftSubtitleTimestamps(utf8, activeSubtitleOffsetMs)
+                    syncedSubFile.writeText(shifted, Charsets.UTF_8)
+                    fileReady = syncedSubFile.exists() && syncedSubFile.length() > 0L
+                }
             } catch (_: Exception) {}
 
             mainHandler.post {
@@ -1283,7 +1346,8 @@ class PlayerActivity : Activity() {
                     return@post
                 }
 
-                val subUri = if (fileReady) Uri.fromFile(cacheSubFile) else Uri.parse(sub.url)
+                activeOpenSubtitleItem = sub
+                val subUri = if (fileReady) Uri.fromFile(syncedSubFile) else Uri.parse(sub.url)
                 val subConfig = MediaItem.SubtitleConfiguration.Builder(subUri)
                     .setMimeType(mimeType)
                     .setLanguage(sub.langCode)
