@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="NOIR Engine &amp; Streaming"
+            android:text="NOCTURNE Engine &amp; Streaming"
             android:textColor="#FFFFFF"
             android:textSize="22sp"
             android:textStyle="bold"
@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="NOIR v2.0 · Parallel Multi-Addon Racer · Rolling LRU Storage · RGB_565 Low-RAM Pipeline"
+            android:text="NOCTURNE v3.2 · Live TV + Cinema · Parallel Multi-Addon Racer · RGB_565 Low-RAM Pipeline"
             android:textColor="#7A7D87"
             android:textSize="11sp" />
 

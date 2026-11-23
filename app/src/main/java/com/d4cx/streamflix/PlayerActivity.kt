@@ -15,6 +15,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -76,7 +77,14 @@ class PlayerActivity : Activity() {
     private lateinit var tvSeekOsd: TextView
     private lateinit var btnSkipIntro: TextView
     private lateinit var layoutBuffering: View
+    private lateinit var ivLoadingBackdrop: ImageView
+    private lateinit var loadingScrim: View
+    private lateinit var ivLoadingLiveEmblem: ImageView
+    private lateinit var loadingTitle: TitleLoadingView
+    private lateinit var tvLoadingEpSubtitle: TextView
     private lateinit var tvBufferingStatus: TextView
+    private var loaderOrganicFill = 0f
+    private var isLoaderCompleting = false
     private lateinit var menuOverlay: View
     private lateinit var tvMenuTitle: TextView
     private lateinit var rvMenuOptions: RecyclerView
@@ -139,7 +147,27 @@ class PlayerActivity : Activity() {
 
     private val bufferDisplayDebounceRunnable = Runnable {
         if (layoutBuffering.visibility != View.VISIBLE) {
+            configureLoaderSurfaceMode()
+            layoutBuffering.animate().cancel()
+            layoutBuffering.alpha = 1f
             layoutBuffering.visibility = View.VISIBLE
+            startOrganicLoaderTick()
+        }
+    }
+
+    private val loaderOrganicTickRunnable = object : Runnable {
+        override fun run() {
+            if (disposed || layoutBuffering.visibility != View.VISIBLE || isLoaderCompleting) return
+            if (loaderOrganicFill < 0.85f) {
+                val step = when {
+                    loaderOrganicFill < 0.30f -> 0.036f
+                    loaderOrganicFill < 0.62f -> 0.022f
+                    else -> 0.009f
+                }
+                loaderOrganicFill = (loaderOrganicFill + step).coerceAtMost(0.85f)
+                loadingTitle.setFill(loaderOrganicFill)
+            }
+            mainHandler.postDelayed(this, 360L)
         }
     }
 
@@ -169,12 +197,17 @@ class PlayerActivity : Activity() {
                                 } else {
                                     String.format(Locale.US, "%s • Cached %.1f MB • %d peers", qLabel, mb, peers)
                                 }
-                                if (layoutBuffering.visibility == View.VISIBLE) {
+                                if (layoutBuffering.visibility == View.VISIBLE && !isLoaderCompleting) {
                                     tvBufferingStatus.text = if (speedMb > 0.05) {
                                         String.format(Locale.US, "Buffering %s • %.1f MB/s (%d peers)", qLabel, speedMb, peers)
                                     } else {
                                         String.format(Locale.US, "Buffering %s • %d peers", qLabel, peers)
                                     }
+                                    var targetFill = 0.22f
+                                    if (peers > 0) targetFill = maxOf(targetFill, (0.48f + (peers.coerceAtMost(18) * 0.01f)))
+                                    if (mb > 0.5) targetFill = maxOf(targetFill, (0.58f + (mb.toFloat() * 0.042f)).coerceAtMost(0.93f))
+                                    loaderOrganicFill = maxOf(loaderOrganicFill, targetFill)
+                                    loadingTitle.setFill(loaderOrganicFill)
                                 }
                             }
                         } catch (_: Exception) {}
@@ -193,7 +226,13 @@ class PlayerActivity : Activity() {
     private val updateProgressRunnable = object : Runnable {
         override fun run() {
             val p = player
-            findViewById<TitleLoadingView>(R.id.loadingTitle).setFill(if(p!=null && p.bufferedPosition>p.currentPosition) ((p.bufferedPosition-p.currentPosition)/4000f).coerceIn(0f,1f) else -1f)
+            if (p != null && p.bufferedPosition > p.currentPosition && layoutBuffering.visibility == View.VISIBLE && !isLoaderCompleting) {
+                val bufFrac = ((p.bufferedPosition - p.currentPosition) / 4000f).coerceIn(0f, 0.94f)
+                if (bufFrac > loaderOrganicFill) {
+                    loaderOrganicFill = bufFrac
+                    loadingTitle.setFill(loaderOrganicFill)
+                }
+            }
             if (isLiveTv) {
                 tvTimeCurrent.text = "● LIVE"
                 tvTimeDuration.text = ""
@@ -271,8 +310,7 @@ class PlayerActivity : Activity() {
 
         mediaType = intent.getStringExtra(EXTRA_MEDIA_TYPE) ?: "series"
         mediaId = intent.getStringExtra(EXTRA_MEDIA_ID) ?: ""
-        mediaTitle = intent.getStringExtra(EXTRA_TITLE) ?: "NOIR"
-        findViewById<TitleLoadingView>(R.id.loadingTitle).text=mediaTitle.substringBefore(" — ")
+        mediaTitle = intent.getStringExtra(EXTRA_TITLE) ?: "NOCTURNE"
         mediaPoster = intent.getStringExtra(EXTRA_POSTER) ?: ""
         mediaBackdrop = intent.getStringExtra(EXTRA_BACKDROP) ?: ""
         seasonNum = intent.getIntExtra(EXTRA_SEASON, 1)
@@ -283,6 +321,7 @@ class PlayerActivity : Activity() {
         }
 
         initViews()
+        prepareStremioLoaderArtwork()
         initExoPlayer()
         setupListeners()
         if (!isLiveTv) loadSubtitlesInBackground()
@@ -326,7 +365,8 @@ class PlayerActivity : Activity() {
         mediaType="movie" // Independent full broadcast timeline, never overwrite story-episode history.
         mediaId="broadcast:"+java.security.MessageDigest.getInstance("SHA-256").digest(item.page.toByteArray()).joinToString(""){"%02x".format(it)}
         mediaTitle=item.label;seasonNum=1;episodeNum=1
-        findViewById<TitleLoadingView>(R.id.loadingTitle).text=item.label
+        isFirstFrameRendered = false
+        prepareStremioLoaderArtwork()
         hasResumedInitialPosition=false
         val stream=ArabicBroadcasts.stream(item)
         availableStreams=listOf(stream);currentStreamIndex=0;updateHeaderTitle()
@@ -365,6 +405,11 @@ class PlayerActivity : Activity() {
             showSeekOsd("Skipped Intro (+1:25)")
         }
         layoutBuffering = findViewById(R.id.layoutBuffering)
+        ivLoadingBackdrop = findViewById(R.id.ivLoadingBackdrop)
+        loadingScrim = findViewById(R.id.loadingScrim)
+        ivLoadingLiveEmblem = findViewById(R.id.ivLoadingLiveEmblem)
+        loadingTitle = findViewById(R.id.loadingTitle)
+        tvLoadingEpSubtitle = findViewById(R.id.tvLoadingEpSubtitle)
         tvBufferingStatus = findViewById(R.id.tvBufferingStatus)
         menuOverlay = findViewById(R.id.menuOverlay)
         tvMenuTitle = findViewById(R.id.tvMenuTitle)
@@ -616,13 +661,118 @@ class PlayerActivity : Activity() {
         }
     }
 
+    private fun prepareStremioLoaderArtwork() {
+        isLoaderCompleting = false
+        loaderOrganicFill = 0f
+        loadingTitle.resetFill()
+        loadingTitle.setLogoBitmap(null)
+
+        val cleanTitle = mediaTitle.substringBefore(" — ").substringBefore(" (").trim().ifEmpty { "NOCTURNE" }
+        loadingTitle.text = cleanTitle
+
+        if (isLiveTv) {
+            val ch = liveChannelList.getOrNull(liveChannelIdx)
+            val emblemUrl = ch?.logo?.ifEmpty { mediaPoster } ?: mediaPoster
+            ivLoadingBackdrop.setImageDrawable(null)
+            ivLoadingBackdrop.visibility = View.GONE
+            if (emblemUrl.isNotEmpty()) {
+                ivLoadingLiveEmblem.visibility = View.VISIBLE
+                ImageLoader.load(emblemUrl, ivLoadingLiveEmblem, 240, 240)
+            } else {
+                ivLoadingLiveEmblem.visibility = View.GONE
+            }
+            tvLoadingEpSubtitle.text = "LIVE BROADCAST"
+            tvLoadingEpSubtitle.visibility = View.VISIBLE
+        } else {
+            ivLoadingLiveEmblem.visibility = View.GONE
+            ivLoadingBackdrop.visibility = View.VISIBLE
+
+            // Prefer 4K/HD Metahub background for IMDb titles, then passed backdrop, then poster
+            val artworkUrl = when {
+                mediaBackdrop.isNotEmpty() -> mediaBackdrop
+                mediaId.startsWith("tt") -> "https://images.metahub.space/background/medium/$mediaId/img"
+                mediaPoster.isNotEmpty() -> mediaPoster
+                else -> ""
+            }
+            if (artworkUrl.isNotEmpty()) {
+                ivLoadingBackdrop.animate().cancel()
+                ivLoadingBackdrop.scaleX = 1.0f
+                ivLoadingBackdrop.scaleY = 1.0f
+                ImageLoader.load(artworkUrl, ivLoadingBackdrop, 1280, 720, keepPreviousWhileLoading = false) { ok ->
+                    if (ok && !disposed) {
+                        ivLoadingBackdrop.animate()
+                            .scaleX(1.07f)
+                            .scaleY(1.07f)
+                            .setDuration(18000L)
+                            .start()
+                    } else if (!ok && mediaPoster.isNotEmpty() && artworkUrl != mediaPoster) {
+                        ImageLoader.load(mediaPoster, ivLoadingBackdrop, 800, 1200)
+                    }
+                }
+            }
+
+            // Load official transparent movie/series logo PNG (Stremio style) if IMDb ID is known
+            if (mediaId.startsWith("tt")) {
+                val logoUrl = "https://images.metahub.space/logo/medium/$mediaId/img"
+                val currentId = mediaId
+                ImageLoader.loadBitmap(logoUrl, 640, 240) { bmp ->
+                    if (!disposed && mediaId == currentId && bmp != null) {
+                        loadingTitle.setLogoBitmap(bmp)
+                    }
+                }
+            }
+
+            val epPart = mediaTitle.substringAfter(" — ", "").trim()
+            if (!mediaType.equals("movie", true)) {
+                val sub = if (epPart.isNotEmpty()) {
+                    String.format(Locale.US, "S%02d · E%02d  —  %s", seasonNum, episodeNum, epPart)
+                } else {
+                    String.format(Locale.US, "SEASON %02d  ·  EPISODE %02d", seasonNum, episodeNum)
+                }
+                tvLoadingEpSubtitle.text = sub
+                tvLoadingEpSubtitle.visibility = View.VISIBLE
+            } else {
+                tvLoadingEpSubtitle.text = "4K CINEMA"
+                tvLoadingEpSubtitle.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun configureLoaderSurfaceMode() {
+        if (!isFirstFrameRendered) {
+            layoutBuffering.setBackgroundColor(Color.BLACK)
+            ivLoadingBackdrop.visibility = if (isLiveTv) View.GONE else View.VISIBLE
+            loadingScrim.visibility = View.VISIBLE
+        } else {
+            // Mid-playback rebuffer: keep paused video visible behind subtle dim glass overlay
+            layoutBuffering.setBackgroundColor(Color.argb(145, 0, 0, 0))
+            ivLoadingBackdrop.visibility = View.GONE
+            loadingScrim.visibility = View.GONE
+        }
+    }
+
+    private fun startOrganicLoaderTick() {
+        mainHandler.removeCallbacks(loaderOrganicTickRunnable)
+        if (loaderOrganicFill < 0.12f) {
+            loaderOrganicFill = 0.12f
+            loadingTitle.setFill(loaderOrganicFill)
+        }
+        mainHandler.postDelayed(loaderOrganicTickRunnable, 220L)
+    }
+
     private fun showBuffering(message: String? = null) {
         if (message != null) {
             tvBufferingStatus.text = message
         }
+        isLoaderCompleting = false
         if (!isFirstFrameRendered) {
-            // Initial connect: show instantly
+            // Initial connect: show full-bleed Stremio 4K artwork + liquid glass fill immediately
+            mainHandler.removeCallbacks(bufferDisplayDebounceRunnable)
+            configureLoaderSurfaceMode()
+            layoutBuffering.animate().cancel()
+            layoutBuffering.alpha = 1f
             layoutBuffering.visibility = View.VISIBLE
+            startOrganicLoaderTick()
         } else {
             // Mid-playback: debounce by 800ms so micro-rebuffering or GOP decodes NEVER flash on screen
             mainHandler.removeCallbacks(bufferDisplayDebounceRunnable)
@@ -632,7 +782,30 @@ class PlayerActivity : Activity() {
 
     private fun hideBuffering() {
         mainHandler.removeCallbacks(bufferDisplayDebounceRunnable)
-        layoutBuffering.visibility = View.GONE
+        mainHandler.removeCallbacks(loaderOrganicTickRunnable)
+        if (layoutBuffering.visibility != View.VISIBLE) return
+        if (isLoaderCompleting) return
+
+        isLoaderCompleting = true
+        loaderOrganicFill = 1f
+        loadingTitle.setFill(1f)
+        tvBufferingStatus.text = "Ready · 100%"
+
+        // Let the liquid glass surge to 100% cleanly before fading into playback
+        mainHandler.postDelayed({
+            if (disposed) return@postDelayed
+            layoutBuffering.animate()
+                .alpha(0f)
+                .setDuration(280L)
+                .withEndAction {
+                    if (isLoaderCompleting) {
+                        layoutBuffering.visibility = View.GONE
+                        layoutBuffering.alpha = 1f
+                        isLoaderCompleting = false
+                    }
+                }
+                .start()
+        }, 200L)
     }
 
     private fun autoSelectPreferredAudioTrack(tracks: Tracks) {
@@ -735,6 +908,8 @@ class PlayerActivity : Activity() {
                 saveCurrentPlaybackState()
                 episodeNum--
                 hasResumedInitialPosition = false
+                isFirstFrameRendered = false
+                prepareStremioLoaderArtwork()
                 updateHeaderTitle()
                 loadSubtitlesInBackground()
                 resolveAndPlayStream()
@@ -753,6 +928,8 @@ class PlayerActivity : Activity() {
                 saveCurrentPlaybackState()
                 episodeNum++
                 hasResumedInitialPosition = false
+                isFirstFrameRendered = false
+                prepareStremioLoaderArtwork()
                 updateHeaderTitle()
                 loadSubtitlesInBackground()
                 resolveAndPlayStream()
@@ -1062,7 +1239,9 @@ class PlayerActivity : Activity() {
         val nextCh = liveChannelList[liveChannelIdx]
         mediaId = "live_${nextCh.id}"
         mediaTitle = nextCh.name
-        findViewById<TitleLoadingView>(R.id.loadingTitle).text = nextCh.name
+        mediaPoster = nextCh.logo
+        isFirstFrameRendered = false
+        prepareStremioLoaderArtwork()
         availableStreams = LiveTvRepository.toStreamItems(nextCh)
         currentStreamIndex = 0
         updateHeaderTitle()
@@ -1674,7 +1853,7 @@ class PlayerActivity : Activity() {
             context.startActivity(Intent(context,PlayerActivity::class.java).apply{
                 putExtra("broadcast_page",rows[index].page);putExtra("broadcast_index",index)
                 putExtra(EXTRA_MEDIA_TYPE,"movie");putExtra(EXTRA_MEDIA_ID,"broadcast")
-                putExtra(EXTRA_TITLE,series.name);putExtra(EXTRA_POSTER,series.poster)
+                putExtra(EXTRA_TITLE,series.name);putExtra(EXTRA_POSTER,series.poster);putExtra(EXTRA_BACKDROP,series.backdrop ?: "")
             })
         }
 

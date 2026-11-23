@@ -47,7 +47,7 @@
                 android:id="@+id/tvPlayerTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NOIR"
+                android:text="NOCTURNE"
                 android:textColor="#FFFFFF"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -70,43 +70,30 @@
                 android:textSize="10.5sp"
                 android:fontFamily="monospace" />
         </LinearLayout>
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:text="NOIR"
-            android:textColor="#99FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:letterSpacing="0.18" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="7dp"
+                android:src="@drawable/ic_nocturne_spider"
+                android:alpha="0.82"
+                android:contentDescription="NOCTURNE" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NOCTURNE"
+                android:textColor="#99FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.18" />
+        </LinearLayout>
     </RelativeLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutBuffering"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
-        <com.d4cx.streamflix.TitleLoadingView
-            android:id="@+id/loadingTitle"
-            android:layout_width="520dp"
-            android:layout_height="76dp"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:maxLines="2"
-            android:ellipsize="end" />
-        <TextView
-            android:id="@+id/tvBufferingStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#9A9EA8"
-            android:textSize="11.5sp"
-            android:visibility="gone" />
-    </LinearLayout>
 
     <TextView
         android:id="@+id/tvSeekOsd"
@@ -228,6 +215,90 @@
             </LinearLayout>
         </RelativeLayout>
     </LinearLayout>
+
+    <!-- Stremio-Style Full-Bleed 4K Artwork & Liquid Glass-Fill Title Loader -->
+    <FrameLayout
+        android:id="@+id/layoutBuffering"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:elevation="6dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/ivLoadingBackdrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="Artwork Backdrop" />
+
+        <View
+            android:id="@+id/loadingScrim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_stremio_scrim" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="48dp"
+            android:paddingEnd="48dp">
+
+            <ImageView
+                android:id="@+id/ivLoadingLiveEmblem"
+                android:layout_width="88dp"
+                android:layout_height="88dp"
+                android:layout_marginBottom="16dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                android:contentDescription="Channel Emblem" />
+
+            <com.d4cx.streamflix.TitleLoadingView
+                android:id="@+id/loadingTitle"
+                android:layout_width="640dp"
+                android:layout_height="154dp" />
+
+            <TextView
+                android:id="@+id/tvLoadingEpSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#B0FFFFFF"
+                android:textSize="12.5sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.18"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:id="@+id/ivLoadingSpider"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_nocturne_spider"
+                    android:alpha="0.72"
+                    android:contentDescription="NOCTURNE" />
+                <TextView
+                    android:id="@+id/tvBufferingStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connecting..."
+                    android:textColor="#88FFFFFF"
+                    android:textSize="11.5sp"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/menuOverlay"

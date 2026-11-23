@@ -23,22 +23,34 @@
             android:paddingStart="34dp"
             android:paddingEnd="34dp">
 
-            <TextView
+            <LinearLayout
                 android:id="@+id/btnNoirLogoGate"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="8dp"
-                android:paddingEnd="8dp"
+                android:paddingEnd="10dp"
                 android:focusable="true"
                 android:clickable="true"
-                android:background="@drawable/bg_rail_icon"
-                android:text="NOIR"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.14" />
+                android:background="@drawable/bg_rail_icon">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_nocturne_spider"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="NOCTURNE" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="NOCTURNE"
+                    android:textColor="#FFFFFF"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.16" />
+            </LinearLayout>
 
             <View
                 android:layout_width="0dp"
@@ -404,7 +416,7 @@
                                     android:id="@+id/homeHeroTitle"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="NOIR CINEMA"
+                                    android:text="NOCTURNE CINEMA"
                                     android:textColor="#FFFFFF"
                                     android:textSize="30sp"
                                     android:textStyle="bold"
@@ -564,7 +576,7 @@
                                 android:layout_height="wrap_content"
                                 android:paddingStart="34dp"
                                 android:paddingBottom="8dp"
-                                android:text="Top Films on NOIR"
+                                android:text="Top Films on NOCTURNE"
                                 android:textColor="#FFFFFF"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -670,16 +682,29 @@
             android:padding="28dp"
             android:alpha="0">
 
-            <TextView
-                android:id="@+id/noirBootTitle"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NOIR"
-                android:textColor="#FFFFFF"
-                android:textSize="54sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.42" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="14dp"
+                    android:src="@drawable/ic_nocturne_spider"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="NOCTURNE Logo" />
+                <TextView
+                    android:id="@+id/noirBootTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NOCTURNE"
+                    android:textColor="#FFFFFF"
+                    android:textSize="46sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.32" />
+            </LinearLayout>
 
             <View
                 android:layout_width="44dp"

@@ -78,7 +78,7 @@ class LanSearchServer(
 
                 val html = """
                     <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-                    <title>NOIR TV Remote Keyboard</title>
+                    <title>NOCTURNE TV Remote Keyboard</title>
                     <style>
                     body{margin:0;background:#000;color:#fff;font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box}
                     .box{width:100%;max-width:420px;border:1px solid #2a2a30;border-radius:10px;padding:24px;background:#0a0a0c}
@@ -88,7 +88,7 @@ class LanSearchServer(
                     input:focus{border-color:#fff}
                     button{width:100%;margin-top:12px;padding:14px;font-size:15px;font-weight:800;background:#fff;color:#000;border:none;border-radius:6px;cursor:pointer}
                     #st{margin-top:12px;font-size:13px;color:#b8bcc6;min-height:18px}
-                    </style></head><body><div class="box"><h1>NOIR</h1><p>Type to search instantly on your TV</p>
+                    </style></head><body><div class="box"><h1>NOCTURNE</h1><p>Type to search instantly on your TV</p>
                     <form onsubmit="go(event)"><input id="q" placeholder="Movie, series, anime or Arabic..." autofocus>
                     <button type="submit">Send to TV</button></form><div id="st"></div></div>
                     <script>function go(e){e.preventDefault();var v=document.getElementById('q').value.trim();if(!v)return;

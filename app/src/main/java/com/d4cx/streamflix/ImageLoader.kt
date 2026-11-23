@@ -112,6 +112,29 @@ object ImageLoader {
         }
     }
 
+    fun loadBitmap(
+        url: String?,
+        reqWidth: Int = 640,
+        reqHeight: Int = 240,
+        onLoaded: (Bitmap?) -> Unit
+    ) {
+        if (url.isNullOrEmpty()) {
+            mainHandler.post { onLoaded(null) }
+            return
+        }
+        val memKey = "${reqWidth}x${reqHeight}_$url"
+        val cached = memoryCache.get(memKey)
+        if (cached != null && !cached.isRecycled) {
+            mainHandler.post { onLoaded(cached) }
+            return
+        }
+        executor.execute {
+            val bmp = runCatching { loadFromDiskOrNetwork(url, reqWidth, reqHeight) }.getOrNull()
+            if (bmp != null) memoryCache.put(memKey, bmp)
+            mainHandler.post { onLoaded(bmp) }
+        }
+    }
+
     fun preload(url: String?, reqWidth: Int = 800, reqHeight: Int = 450) {
         if (url.isNullOrEmpty()) return
         val memKey = "${reqWidth}x${reqHeight}_$url"

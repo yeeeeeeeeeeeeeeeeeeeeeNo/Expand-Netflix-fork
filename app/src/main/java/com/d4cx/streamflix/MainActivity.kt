@@ -1021,7 +1021,7 @@ class MainActivity : Activity() {
         homeHeroGenres.text = if (item.genres.isNotEmpty()) {
             item.genres.take(3).joinToString(" · ")
         } else {
-            "NOIR Spotlight"
+            "NOCTURNE Spotlight"
         }
         homeHeroDesc.text = item.description?.ifEmpty { null }
             ?: "Parallel multi-addon streaming in crisp 4K HDR."

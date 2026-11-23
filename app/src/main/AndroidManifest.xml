@@ -6,10 +6,10 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
     <application
-        android:label="NOIR"
+        android:label="NOCTURNE"
         android:theme="@style/Theme.StreamFlix"
-        android:banner="@drawable/banner_noir"
-        android:icon="@drawable/ic_noir_logo"
+        android:banner="@drawable/banner_nocturne"
+        android:icon="@drawable/ic_nocturne_logo"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:extractNativeLibs="true"
