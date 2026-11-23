@@ -330,6 +330,7 @@ func main() {
 	mux.HandleFunc("/pc/audiotracks", eng.handlePcAudioTracks)
 	mux.HandleFunc("/pc/ffmpeg", eng.handlePcFfmpegStream)
 	mux.HandleFunc("/pc/state", eng.handlePcState)
+	mux.HandleFunc("/pc/img", eng.handlePcImageProxy)
 	mux.HandleFunc("/icon.png", eng.handleNocturneIcon)
 	mux.HandleFunc("/favicon.ico", eng.handleNocturneIcon)
 	mux.HandleFunc("/", eng.handleNoirUI)
