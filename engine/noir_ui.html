@@ -1,0 +1,3375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOCTURNE</title>
+<link rel="icon" type="image/png" href="/icon.png">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0b0d13;
+    --card: #10121a;
+    --elevated: #171a24;
+    --border: #232836;
+    --border-focus: #ffffff;
+    --text: #f8fafc;
+    --text-sec: #94a3b8;
+    --text-dim: #64748b;
+    --emerald: #10b981;
+    --amber: #fbbf24;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+  body.mode-tv { font-size: 16px; }
+  body.mode-pc { font-size: 14px; }
+
+  /* =====================================================================
+     HARDWARE WEBGL2 GPU UPSCALER CANVAS (ZERO COLOR SHIFT)
+     ===================================================================== */
+  #noirGpuCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+    pointer-events: none;
+    z-index: 2;
+    background: #000000;
+  }
+  #noirVideo.gpu-piped {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* =====================================================================
+     MONUMENTAL NOIR DUAL-PORTAL BOOT GATE
+     ===================================================================== */
+  #noirGate {
+    position: fixed;
+    inset: 0;
+    background: #000000;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #noirGate.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .gate-beam {
+    position: fixed;
+    width: 3px;
+    height: 140px;
+    background: #ffffff;
+    opacity: 0;
+    animation: beamOpen 0.55s ease forwards;
+  }
+  @keyframes beamOpen {
+    0% { opacity: 0; transform: scaleY(0.1) scaleX(1); }
+    45% { opacity: 1; transform: scaleY(1.3) scaleX(1); }
+    100% { opacity: 0; transform: scaleY(1.3) scaleX(28); }
+  }
+  .gate-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px;
+    animation: gateIn 0.55s 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes gateIn {
+    0% { opacity: 0; transform: scale(0.92); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .gate-spider {
+    width: 68px;
+    height: 68px;
+    object-fit: contain;
+    margin-bottom: 14px;
+    filter: drop-shadow(0 0 22px rgba(255,255,255,0.28));
+    opacity: 0.96;
+  }
+  .gate-logo {
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: 20px;
+    padding-left: 20px;
+    color: #ffffff;
+    line-height: 1;
+  }
+  .gate-rule {
+    width: 48px;
+    height: 1.5px;
+    background: rgba(255,255,255,0.3);
+    margin: 14px 0 12px;
+  }
+  .gate-sub {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    padding-left: 6px;
+    color: #788094;
+  }
+  .gate-cards {
+    display: flex;
+    gap: 32px;
+    margin-top: 38px;
+    padding: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .gate-card {
+    width: 340px;
+    height: 215px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #0e1017 0%, #07080c 100%);
+    border: 1.5px solid #222633;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 26px;
+    text-align: center;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+  }
+  .gate-card:hover, .gate-card:focus {
+    transform: scale(1.045);
+    background: linear-gradient(180deg, #1d212c 0%, #0f1118 100%);
+    border-color: #ffffff;
+    box-shadow: 0 18px 48px rgba(0,0,0,0.75);
+  }
+  .gate-icon-ring {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #161924;
+    border: 1.2px solid #303647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gate-card-title {
+    margin-top: 18px;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1.6px;
+    color: #ffffff;
+  }
+  .gate-card-sub {
+    margin-top: 7px;
+    font-size: 11.5px;
+    color: #8a92a6;
+    line-height: 1.45;
+  }
+  .gate-platform-pill {
+    margin-top: 26px;
+    font-size: 10.5px;
+    color: #64748b;
+    letter-spacing: 1.2px;
+  }
+
+  /* =====================================================================
+     TOP MONOCHROME NOIR NAVIGATION RAIL (1:1 MATCH WITH XIAOMI TV APP)
+     ===================================================================== */
+  #appShell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #000000;
+  }
+  .top-rail {
+    height: 56px;
+    background: #000000;
+    border-bottom: 1px solid rgba(255,255,255,0.09);
+    display: flex;
+    align-items: center;
+    padding: 0 34px;
+    flex-shrink: 0;
+  }
+  .rail-brand {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: 5px;
+    color: #ffffff;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .rail-brand:hover, .rail-brand:focus {
+    border-color: rgba(255,255,255,0.4);
+    background: #14161e;
+    outline: none;
+  }
+  .rail-spacer { flex: 1; }
+  .rail-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rail-tab {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #b8bec8;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .rail-tab:hover, .rail-tab:focus {
+    color: #ffffff;
+    background: #151720;
+    border-color: rgba(255,255,255,0.28);
+    outline: none;
+  }
+  .rail-tab.active {
+    color: #ffffff;
+    background: #171922;
+  }
+  .rail-tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 26px;
+    height: 2.5px;
+    background: #ffffff;
+    border-radius: 2px;
+  }
+  .rail-badge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .platform-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+    background: #10121a;
+    border: 1px solid #232836;
+    padding: 4px 9px;
+    border-radius: 5px;
+  }
+  .engine-orb {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #13161f;
+    border: 1px solid #262c3c;
+    color: var(--emerald);
+    font-size: 11px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* =====================================================================
+     SCREEN HOST & COMMON CONTROLS
+     ===================================================================== */
+  .screen-host {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    display: none;
+    background: #000000;
+  }
+  .screen.active { display: block; }
+  .screen::-webkit-scrollbar { width: 6px; }
+  .screen::-webkit-scrollbar-thumb { background: #262b38; border-radius: 3px; }
+
+  .pill-primary {
+    height: 36px;
+    padding: 0 22px;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background: #ffffff;
+    color: #000000;
+    font-size: 12.5px;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: transform 0.12s, background 0.12s;
+  }
+  .pill-primary:hover, .pill-primary:focus {
+    transform: scale(1.03);
+    background: #e2e8f0;
+    outline: none;
+  }
+  .pill-secondary {
+    height: 36px;
+    padding: 0 18px;
+    border-radius: 5px;
+    border: 1.2px solid #383842;
+    background: #1e1e23;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: transform 0.12s, border-color 0.12s, background 0.12s;
+  }
+  .pill-secondary:hover, .pill-secondary:focus {
+    transform: scale(1.03);
+    background: #2b2b34;
+    border-color: #ffffff;
+    outline: none;
+  }
+
+  /* =====================================================================
+     TAB 0: HOME BILLBOARD & SHELVES
+     ===================================================================== */
+  .hero-billboard {
+    position: relative;
+    height: 340px;
+    background: #000000;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 38px 26px;
+  }
+  .hero-backdrop {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 68%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.72;
+    transition: opacity 0.25s;
+  }
+  .hero-scrim-l {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #000000 0%, #000000 32%, rgba(0,0,0,0.45) 68%, rgba(0,0,0,0.12) 100%);
+  }
+  .hero-scrim-b {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 140px;
+    background: linear-gradient(0deg, #000000 0%, rgba(0,0,0,0.75) 55%, transparent 100%);
+  }
+  .hero-meta-col {
+    position: relative;
+    z-index: 2;
+    max-width: 560px;
+  }
+  .hero-kicker {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 2.6px;
+    color: #b8bcc6;
+    margin-bottom: 6px;
+  }
+  .hero-title {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -0.6px;
+    color: #ffffff;
+    line-height: 1.08;
+  }
+  .hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+  .hero-year-pill {
+    background: #161922;
+    border: 1px solid #2b3142;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .hero-desc {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: #c8ccd4;
+    line-height: 1.48;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .hero-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .shelf-wrap {
+    padding: 16px 38px 6px;
+  }
+  .shelf-header {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .shelf-row {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 6px 4px 14px;
+  }
+  .shelf-row::-webkit-scrollbar { height: 5px; }
+  .shelf-row::-webkit-scrollbar-thumb { background: #262b38; border-radius: 3px; }
+
+  .poster-card {
+    width: 154px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: #0d0f15;
+    border: 1.5px solid #1e222f;
+    overflow: hidden;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.14s ease, border-color 0.14s ease;
+  }
+  .poster-card:hover, .poster-card:focus {
+    transform: scale(1.055);
+    border-color: #ffffff;
+  }
+  .poster-img {
+    width: 100%;
+    height: 222px;
+    object-fit: cover;
+    background: #090b10;
+    display: block;
+  }
+  .poster-info {
+    padding: 9px 10px;
+    background: #050608;
+  }
+  .poster-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .poster-sub {
+    font-size: 10.5px;
+    color: #8e96a4;
+    margin-top: 3px;
+  }
+
+  .cw-card {
+    width: 248px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: #0d0f15;
+    border: 1.5px solid #1e222f;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.14s ease, border-color 0.14s ease;
+  }
+  .cw-card:hover, .cw-card:focus { transform: scale(1.045); border-color: #ffffff; outline: none; }
+  .cw-thumb-box { position: relative; height: 132px; background: #090b10; }
+  .cw-thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+  .cw-progress-track { position: absolute; left: 0; right: 0; bottom: 0; height: 3.5px; background: rgba(255,255,255,0.2); }
+  .cw-progress-fill { height: 100%; background: #ffffff; }
+
+  /* =====================================================================
+     LIVE TV STUDIO (EXACT MUSEUM-GRADE RADIAL LOGO STAGE)
+     ===================================================================== */
+  .live-page {
+    padding: 16px 38px 28px;
+  }
+  .live-hero-deck {
+    background: #0c0f16;
+    border: 1px solid #232836;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 16px;
+  }
+  .logo-stage {
+    background: radial-gradient(circle, #343a4b 0%, #1c202b 58%, #0f1118 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .live-hero-logo-box {
+    width: 170px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 16px;
+    flex-shrink: 0;
+  }
+  .live-hero-logo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .logo-mono {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #94a3b8;
+  }
+  .live-hero-info { flex: 1; min-width: 0; }
+  .live-kicker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+  }
+  .live-dot-label {
+    color: var(--emerald);
+    font-weight: 800;
+    letter-spacing: 1.5px;
+  }
+  .live-hero-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #ffffff;
+    margin: 4px 0 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .live-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .chip-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #12151f;
+    border: 1px solid #262c3d;
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .chip:hover, .chip:focus { border-color: #ffffff; color: #ffffff; outline: none; }
+  .chip.active {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+  }
+  .search-input {
+    height: 36px;
+    width: 250px;
+    border-radius: 8px;
+    background: #0c0e15;
+    border: 1px solid #262c3d;
+    color: #ffffff;
+    padding: 0 14px;
+    font-size: 12.5px;
+    outline: none;
+  }
+  .search-input:focus { border-color: #ffffff; }
+
+  .live-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+    gap: 16px;
+    padding: 4px;
+  }
+  .live-card {
+    border-radius: 12px;
+    background: #08090d;
+    border: 1.5px solid #202430;
+    overflow: hidden;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.14s ease, border-color 0.14s ease;
+  }
+  .live-card:hover, .live-card:focus {
+    transform: scale(1.045);
+    border-color: #ffffff;
+  }
+  .live-card-stage {
+    height: 106px;
+    padding: 18px 24px;
+  }
+  .live-card-stage img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .live-card-footer {
+    padding: 10px 13px 11px;
+    background: #08090d;
+  }
+  .live-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .live-card-meta {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .live-card-meta .spacer { flex: 1; }
+
+  /* =====================================================================
+     GRID PAGES (SEARCH / BROWSE / MY LIST / SETTINGS)
+     ===================================================================== */
+  .grid-page { padding: 20px 38px 36px; }
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
+    gap: 16px;
+    padding: 4px;
+    margin-top: 16px;
+  }
+  .settings-card {
+    background: #0c0f16;
+    border: 1px solid #232836;
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    max-width: 780px;
+  }
+  .settings-title { font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 6px; }
+  .settings-desc { font-size: 12.5px; color: #94a3b8; margin-bottom: 14px; line-height: 1.5; }
+
+  /* =====================================================================
+     DETAIL OVERLAY (MOVIE & SERIES + STREAM SOURCES)
+     ===================================================================== */
+  #detailOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.96);
+    z-index: 1200;
+    display: none;
+    overflow-y: auto;
+  }
+  #detailOverlay.open { display: block; }
+  .detail-hero {
+    position: relative;
+    min-height: 310px;
+    padding: 24px 42px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    border-bottom: 1px solid #1e2230;
+  }
+  .detail-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.35;
+  }
+  .detail-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, #000000 0%, rgba(0,0,0,0.68) 60%, rgba(0,0,0,0.85) 100%);
+  }
+  .detail-inner { position: relative; z-index: 2; max-width: 820px; }
+  .detail-body { padding: 24px 42px 48px; }
+  .stream-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .stream-row {
+    background: #0d1018;
+    border: 1.2px solid #232838;
+    border-radius: 10px;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s, transform 0.12s;
+  }
+  .stream-row:hover, .stream-row:focus {
+    border-color: #ffffff;
+    background: #161a26;
+    transform: translateX(4px);
+    outline: none;
+  }
+  .stream-q {
+    min-width: 78px;
+    text-align: center;
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 900;
+    background: #232836;
+    color: #ffffff;
+  }
+  .stream-q.q4k { background: #ffffff; color: #000000; }
+  .stream-main { flex: 1; min-width: 0; }
+  .stream-name { font-size: 13px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stream-meta { font-size: 11px; color: #94a3b8; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .ep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .ep-card {
+    background: #0d1018;
+    border: 1.2px solid #222736;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.12s, transform 0.12s;
+  }
+  .ep-card:hover, .ep-card:focus { border-color: #ffffff; transform: scale(1.025); outline: none; }
+  .ep-card img { width: 100%; height: 142px; object-fit: cover; background: #090b10; display: block; }
+  .ep-card-body { padding: 10px 12px; }
+  .ep-card-title { font-size: 12.5px; font-weight: 700; color: #ffffff; }
+  .ep-card-desc { font-size: 11px; color: #8a92a6; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* =====================================================================
+     FULLSCREEN CINEMA & LIVE TV PLAYER OVERLAY
+     ===================================================================== */
+  #playerOverlay {
+    position: fixed;
+    inset: 0;
+    background: #000000;
+    z-index: 2500;
+    display: none;
+    flex-direction: column;
+  }
+  #playerOverlay.open { display: flex; }
+  .player-stage {
+    position: relative;
+    flex: 1;
+    background: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #noirVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000000;
+    display: block;
+  }
+  #playerOverlay.hud-hidden {
+    cursor: none;
+  }
+  .player-hud-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 22px 28px 54px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.32) 55%, transparent 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 20;
+    transition: opacity 0.24s ease;
+  }
+  .player-top-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+  .player-title-stack {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .player-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: rgba(255,255,255,0.96);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-badge {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.52);
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .player-hud-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 52px 28px 20px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.38) 58%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 20;
+    transition: opacity 0.24s ease;
+  }
+  .player-scrub-wrap {
+    display: none;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+  }
+  .player-scrub-wrap.visible { display: flex; }
+  .player-time {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.68);
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+    text-align: center;
+  }
+  .player-scrub-track {
+    position: relative;
+    flex: 1;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .player-scrub-rail {
+    position: relative;
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.22);
+    transition: height 0.14s ease;
+  }
+  .player-scrub-track:hover .player-scrub-rail { height: 5px; }
+  .player-scrub-fill {
+    position: relative;
+    height: 100%;
+    width: 0%;
+    background: #ffffff;
+    border-radius: 999px;
+  }
+  .player-scrub-fill::after {
+    content: "";
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.65);
+    transform: translateY(-50%) scale(0);
+    transition: transform 0.14s ease;
+  }
+  .player-scrub-track:hover .player-scrub-fill::after {
+    transform: translateY(-50%) scale(1);
+  }
+  .player-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+    gap: 12px;
+  }
+  .player-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .p-icon-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.84);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.14s ease, color 0.14s ease, transform 0.12s ease;
+    position: relative;
+  }
+  .p-icon-btn:hover {
+    background: rgba(255,255,255,0.12);
+    color: #ffffff;
+  }
+  .p-icon-btn:active {
+    transform: scale(0.93);
+  }
+  .p-icon-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+  }
+  .p-text-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.72);
+    height: 34px;
+    padding: 0 11px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.14s ease, color 0.14s ease;
+  }
+  .p-text-btn:hover {
+    background: rgba(255,255,255,0.10);
+    color: #ffffff;
+  }
+  .p-text-btn.gpu-on {
+    color: #ffffff;
+  }
+  .p-text-btn .gpu-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.28);
+    transition: background 0.16s ease, box-shadow 0.16s ease;
+  }
+  .p-text-btn.gpu-on .gpu-dot {
+    background: #ffffff;
+    box-shadow: 0 0 8px rgba(255,255,255,0.85);
+  }
+  .player-vol-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+  }
+  .player-vol-slider {
+    width: 72px;
+    height: 3px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.26);
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+  }
+  .player-vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+  }
+  #playerOverlay.hud-hidden .player-hud-top,
+  #playerOverlay.hud-hidden .player-hud-bottom {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .player-buffer-banner {
+    position: absolute;
+    right: 28px;
+    bottom: 88px;
+    z-index: 19;
+    background: rgba(0,0,0,0.68);
+    backdrop-filter: blur(12px);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.78);
+    display: none;
+  }
+
+  /* =====================================================================
+     STREMIO-STYLE 4K ARTWORK & LIQUID GLASS-FILLING TITLE LOADER
+     ===================================================================== */
+  #stremioLoader {
+    position: absolute;
+    inset: 0;
+    z-index: 16;
+    background: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+  }
+  #stremioLoader.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .stremio-backdrop {
+    position: absolute;
+    inset: -3%;
+    width: 106%;
+    height: 106%;
+    object-fit: cover;
+    filter: brightness(0.42) saturate(1.05);
+    transform: scale(1.01);
+    animation: stremioKenBurns 18s ease-in-out infinite alternate;
+  }
+  @keyframes stremioKenBurns {
+    0%   { transform: scale(1.00); }
+    100% { transform: scale(1.07); }
+  }
+  .stremio-scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0.24) 0%, rgba(0,0,0,0.76) 72%, rgba(0,0,0,0.95) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.16) 45%, rgba(0,0,0,0.88) 100%);
+  }
+  .stremio-center {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 78vw;
+    padding: 24px;
+    text-align: center;
+  }
+  .stremio-live-emblem {
+    width: 108px;
+    height: 108px;
+    object-fit: contain;
+    margin-bottom: 22px;
+    filter: drop-shadow(0 0 28px rgba(255,255,255,0.26));
+    display: none;
+  }
+  .stremio-logo-wrap {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    max-width: min(680px, 74vw);
+    max-height: 220px;
+  }
+  .stremio-logo-wrap > * {
+    grid-area: 1 / 1;
+  }
+  .stremio-logo-img {
+    max-width: min(640px, 72vw);
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+  }
+  .stremio-logo-dim {
+    opacity: 0.24;
+    filter: grayscale(1) brightness(0.65);
+  }
+  /* Bottom-to-top liquid wave glass fill inside logo & text */
+  .stremio-logo-fill,
+  .stremio-wordmark.fill {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240' preserveAspectRatio='none'%3E%3Cpath fill='%23ffffff' d='M0,120 Q30,104 60,120 T120,120 T180,120 T240,120 L240,240 L0,240 Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240' preserveAspectRatio='none'%3E%3Cpath fill='%23ffffff' d='M0,120 Q30,104 60,120 T120,120 T180,120 T240,120 L240,240 L0,240 Z'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+    -webkit-mask-size: 240px 245%;
+    mask-size: 240px 245%;
+    -webkit-mask-position-y: var(--liquid-y, 4%);
+    mask-position-y: var(--liquid-y, 4%);
+    transition: -webkit-mask-position-y 0.48s cubic-bezier(0.22, 1, 0.36, 1), mask-position-y 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: liquidWaveX 1.65s linear infinite;
+  }
+  @keyframes liquidWaveX {
+    0%   { -webkit-mask-position-x: 0px;   mask-position-x: 0px; }
+    100% { -webkit-mask-position-x: 240px; mask-position-x: 240px; }
+  }
+  .stremio-logo-fill {
+    opacity: 1;
+    filter: drop-shadow(0 0 28px rgba(255,255,255,0.44));
+  }
+  .stremio-wordmark {
+    font-size: clamp(38px, 5.6vw, 78px);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    padding: 6px 14px;
+    white-space: normal;
+    word-break: break-word;
+  }
+  .stremio-wordmark.dim {
+    color: rgba(148, 163, 184, 0.24);
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.14);
+  }
+  .stremio-wordmark.fill {
+    color: #ffffff;
+    text-shadow: 0 0 30px rgba(255,255,255,0.42);
+  }
+  .stremio-ep-line {
+    margin-top: 18px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.68);
+  }
+  .stremio-meta-line {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.48);
+    font-variant-numeric: tabular-nums;
+  }
+  .stremio-meta-spider {
+    width: 15px;
+    height: 15px;
+    object-fit: contain;
+    opacity: 0.7;
+    animation: spiderPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes spiderPulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.95); }
+    50%      { opacity: 0.95; transform: scale(1.05); }
+  }
+  .rail-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .rail-spider {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.22));
+  }
+  .engine-orb img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+  .player-drawer {
+    position: absolute;
+    right: 28px;
+    bottom: 76px;
+    width: 310px;
+    max-height: 56vh;
+    overflow-y: auto;
+    background: rgba(10, 12, 16, 0.88);
+    backdrop-filter: blur(26px);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    padding: 10px;
+    z-index: 30;
+    display: none;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+  }
+  .player-drawer.open { display: block; }
+  .drawer-item {
+    padding: 9px 12px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.74);
+    cursor: pointer;
+    margin-top: 2px;
+    background: transparent;
+    border: none;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .drawer-item:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
+  .drawer-item.active { background: rgba(255,255,255,0.14); color: #ffffff; font-weight: 600; }
+</style>
+</head>
+<body class="mode-pc">
+
+<!-- MONUMENTAL NOCTURNE DUAL-PORTAL BOOT GATE -->
+<div id="noirGate">
+  <div class="gate-beam"></div>
+  <div class="gate-content">
+    <img class="gate-spider" src="/icon.png" alt="NOCTURNE">
+    <div class="gate-logo">NOCTURNE</div>
+    <div class="gate-rule"></div>
+    <div class="gate-sub">CHOOSE MODE</div>
+    <div class="gate-cards">
+      <div class="gate-card" tabindex="0" id="gateMoviesBtn" onclick="enterMode('home')">
+        <div class="gate-icon-ring">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="#ffffff"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4zm-8 12.5v-5l4.5 2.5L10 16.5z"/></svg>
+        </div>
+        <div class="gate-card-title">MOVIES &amp; SERIES</div>
+        <div class="gate-card-sub">4K HDR Films · Series · Anime · Arabic Classics</div>
+      </div>
+
+      <div class="gate-card" tabindex="0" id="gateTvBtn" onclick="enterMode('livetv')">
+        <div class="gate-icon-ring">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="#ffffff"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12zM9 8v6l5-3-5-3z"/></svg>
+        </div>
+        <div class="gate-card-title">TV CHANNELS</div>
+        <div class="gate-card-sub">beIN Sports · Cartoon Network · MBC 3 · Nilesat</div>
+      </div>
+    </div>
+    <div class="gate-platform-pill" id="gatePlatformLabel">AUTO-DETECTED: PC DESKTOP · BALANCED WI-FI ENGINE READY</div>
+  </div>
+</div>
+
+<!-- MAIN NOCTURNE SHELL -->
+<div id="appShell">
+  <header class="top-rail">
+    <button class="rail-brand" onclick="openGate()" title="Switch between Movies & Live TV"><img class="rail-spider" src="/icon.png" alt=""><span>NOCTURNE</span></button>
+    <div class="rail-spacer"></div>
+    <nav class="rail-tabs">
+      <button class="rail-tab active" data-tab="home" onclick="switchTab('home')">Home</button>
+      <button class="rail-tab" data-tab="search" onclick="switchTab('search')">Search</button>
+      <button class="rail-tab" data-tab="browse" onclick="switchTab('browse')">Browse &amp; Arabic</button>
+      <button class="rail-tab" data-tab="livetv" onclick="switchTab('livetv')">TV Channels</button>
+      <button class="rail-tab" data-tab="library" onclick="switchTab('library')">My List</button>
+      <button class="rail-tab" data-tab="settings" onclick="switchTab('settings')">Settings</button>
+    </nav>
+    <div class="rail-spacer"></div>
+    <div class="rail-badge-wrap">
+      <div class="platform-badge" id="topProfileBadge">BALANCED WI-FI</div>
+      <div class="engine-orb" id="engineOrb" onclick="switchTab('settings')" title="Engine Telemetry"><img src="/icon.png" alt=""></div>
+    </div>
+  </header>
+
+  <main class="screen-host">
+    <!-- TAB: HOME -->
+    <section class="screen active" id="screen-home">
+      <div class="hero-billboard">
+        <img class="hero-backdrop" id="homeHeroBg" src="" alt="">
+        <div class="hero-scrim-l"></div>
+        <div class="hero-scrim-b"></div>
+        <div class="hero-meta-col">
+          <div class="hero-kicker" id="homeHeroKicker">NOCTURNE · FEATURED · 4K HDR</div>
+          <div class="hero-title" id="homeHeroTitle">NOCTURNE</div>
+          <div class="hero-stats">
+            <span id="homeHeroRating">★ 8.6</span>
+            <span class="hero-year-pill" id="homeHeroYear">2025</span>
+            <span id="homeHeroGenres">Cinema Spotlight</span>
+          </div>
+          <div class="hero-desc" id="homeHeroDesc">Loading spotlight...</div>
+          <div class="hero-btns">
+            <button class="pill-primary" onclick="playHeroNow()">▶ Play</button>
+            <button class="pill-secondary" onclick="openHeroDetail()">More Info</button>
+            <button class="pill-secondary" id="homeHeroListBtn" onclick="toggleHeroMyList()">+ My List</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="shelf-wrap" id="cwSection" style="display:none;">
+        <div class="shelf-header"><span>Continue Watching</span></div>
+        <div class="shelf-row" id="rowContinue"></div>
+      </div>
+
+      <div class="shelf-wrap">
+        <div class="shelf-header"><span>Top Films on NOCTURNE</span></div>
+        <div class="shelf-row" id="rowMovies"></div>
+      </div>
+
+      <div class="shelf-wrap">
+        <div class="shelf-header"><span>Trending Series</span></div>
+        <div class="shelf-row" id="rowSeries"></div>
+      </div>
+
+      <div class="shelf-wrap" style="padding-bottom:36px;">
+        <div class="shelf-header"><span>Arabic Dub &amp; Classics</span></div>
+        <div class="shelf-row" id="rowCartoons"></div>
+      </div>
+    </section>
+
+    <!-- TAB: SEARCH -->
+    <section class="screen" id="screen-search">
+      <div class="grid-page">
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="cinemaSearchInput" class="search-input" style="width:420px; height:42px; font-size:14px;" placeholder="Search movies, series, anime (JoJo, 86, Interstellar, Dune)..." oninput="debouncedCinemaSearch()">
+          <div class="chip-row">
+            <button class="chip" onclick="quickSearch('Dune')">Dune</button>
+            <button class="chip" onclick="quickSearch('Breaking Bad')">Breaking Bad</button>
+            <button class="chip" onclick="quickSearch('JoJo')">JoJo</button>
+            <button class="chip" onclick="quickSearch('86')">86</button>
+            <button class="chip" onclick="quickSearch('Interstellar')">Interstellar</button>
+          </div>
+        </div>
+        <div class="chip-row" style="margin-top:12px;" id="searchTypeChips">
+          <button class="chip active" onclick="setSearchType('all', this)">All</button>
+          <button class="chip" onclick="setSearchType('movie', this)">Movies</button>
+          <button class="chip" onclick="setSearchType('series', this)">Series</button>
+          <button class="chip" onclick="setSearchType('anime', this)">Anime</button>
+        </div>
+        <div id="searchStatus" style="margin-top:14px; color:#94a3b8; font-size:13px;">Type at least 2 characters to search across Cinemeta, IMDb, Kitsu Anime &amp; Arabic Classics.</div>
+        <div class="catalog-grid" id="searchGrid"></div>
+      </div>
+    </section>
+
+    <!-- TAB: BROWSE & ARABIC -->
+    <section class="screen" id="screen-browse">
+      <div class="grid-page">
+        <div class="chip-row" id="browseCatChips">
+          <button class="chip active" onclick="setBrowseCat('all', this)">All</button>
+          <button class="chip" onclick="setBrowseCat('movie', this)">Movies</button>
+          <button class="chip" onclick="setBrowseCat('series', this)">Series</button>
+          <button class="chip" onclick="setBrowseCat('anime', this)">Anime (Kitsu)</button>
+          <button class="chip" onclick="setBrowseCat('cartoons', this)">Arabic Cartoons</button>
+        </div>
+        <div class="chip-row" style="margin-top:10px;" id="browseGenreChips">
+          <button class="chip active" onclick="setBrowseGenre('Popular', this)">Popular</button>
+          <button class="chip" onclick="setBrowseGenre('Action & Sci-Fi', this)">Action &amp; Sci-Fi</button>
+          <button class="chip" onclick="setBrowseGenre('Thriller', this)">Thriller</button>
+          <button class="chip" onclick="setBrowseGenre('Comedy', this)">Comedy</button>
+          <button class="chip" onclick="setBrowseGenre('Drama', this)">Drama</button>
+          <button class="chip" onclick="setBrowseGenre('Top Rated', this)">Top Rated</button>
+        </div>
+        <div id="browseStatus" style="margin-top:14px; color:#94a3b8; font-size:12.5px;"></div>
+        <div class="catalog-grid" id="browseGrid"></div>
+      </div>
+    </section>
+
+    <!-- TAB: LIVE TV STUDIO -->
+    <section class="screen" id="screen-livetv">
+      <div class="live-page">
+        <div class="live-hero-deck">
+          <div class="logo-stage live-hero-logo-box">
+            <span class="logo-mono" id="liveHeroMono">NOCTURNE</span>
+            <img id="liveHeroLogo" src="" alt="" style="display:none;">
+          </div>
+          <div class="live-hero-info">
+            <div class="live-kicker">
+              <span class="live-dot-label" id="liveHeroBadge">★ LIVE · 1080P FHD</span>
+              <span style="color:#8a92a6;" id="liveHeroGroup">Cartoon &amp; Kids · Nilesat Direct</span>
+            </div>
+            <div class="live-hero-title" id="liveHeroTitle">Cartoon Network Arabic (CN Arabia)</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="pill-primary" onclick="watchCurrentLiveChannel(0)">▶ Watch Live</button>
+              <button class="pill-secondary" id="liveHeroFeedBtn" onclick="cycleLiveFeedPicker()">Feeds (3)</button>
+              <button class="pill-secondary" onclick="openGate()">⇄ Switch Mode</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="live-controls-bar">
+          <div class="chip-row" id="liveCatChips">
+            <button class="chip active" onclick="setLiveGroup('VIP', this)">★ VIP</button>
+            <button class="chip" onclick="setLiveGroup('beIN & Sports VIP', this)">beIN &amp; Sports</button>
+            <button class="chip" onclick="setLiveGroup('Cartoon & Kids', this)">Cartoon &amp; Kids</button>
+            <button class="chip" onclick="setLiveGroup('Arabic Satellite', this)">Nilesat</button>
+            <button class="chip" onclick="setLiveGroup('Samsung TV+', this)">Samsung+</button>
+            <button class="chip" onclick="setLiveGroup('ALL', this)">All Channels</button>
+          </div>
+          <input type="text" id="liveFilterInput" class="search-input" placeholder="Filter (beIN, CN, MBC 3, Arryadia)..." oninput="debouncedLiveFilter()">
+        </div>
+
+        <div id="liveStatus" style="color:#94a3b8; font-size:13px; margin-bottom:10px;"></div>
+        <div class="live-grid" id="liveGrid"></div>
+      </div>
+    </section>
+
+    <!-- TAB: MY LIST -->
+    <section class="screen" id="screen-library">
+      <div class="grid-page">
+        <div class="shelf-header"><span>My Watchlist</span></div>
+        <div id="libraryEmpty" style="color:#94a3b8; font-size:13px; margin-top:12px;">Nothing in My List yet. Open any movie or series and click + My List.</div>
+        <div class="catalog-grid" id="libraryGrid"></div>
+      </div>
+    </section>
+
+    <!-- TAB: SETTINGS -->
+    <section class="screen" id="screen-settings">
+      <div class="grid-page">
+        <div class="settings-card">
+          <div class="settings-title">Wi-Fi &amp; Stream Quality Profile</div>
+          <div class="settings-desc"><b>Balanced / Meh Wi-Fi (Recommended):</b> Automatically prioritizes fast-starting 1080p WEB-DL torrents (0.8–3.8 GB, high seeders) + deep HLS live buffer so playback never stalls on average Wi-Fi. Pair with GPU Enhancer inside the player for crisp 4K-like clarity at zero extra bandwidth.</div>
+          <div class="chip-row">
+            <button class="chip active" id="profBalanced" onclick="setWifiProfile('balanced')">★ Balanced / Meh Wi-Fi (Zero-Buffer 1080p)</button>
+            <button class="chip" id="profFiber" onclick="setWifiProfile('fiber4k')">4K Fiber (Max Bitrate UHD)</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-title">Display &amp; Input Mode (Auto-Detect PC / TV)</div>
+          <div class="settings-desc" id="uiModeStatus">Auto-detected PC Desktop (Mouse + Keyboard Shortcuts: Space, F, Arrow Keys, Esc). Switch to TV 10-Foot mode if plugged into a television.</div>
+          <div class="chip-row">
+            <button class="chip active" id="uiAuto" onclick="setUiMode('auto')">Auto-Detect</button>
+            <button class="chip" id="uiPc" onclick="setUiMode('pc')">PC Desktop</button>
+            <button class="chip" id="uiTv" onclick="setUiMode('tv')">TV 10-Foot</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-title">Sovereign Rolling Piece Cache &amp; Engine Telemetry</div>
+          <div class="settings-desc" id="engineTelemetryText">Checking local Go hole-punching engine...</div>
+          <div class="chip-row">
+            <button class="chip" onclick="setCacheLimit(160)">160 MB Cap</button>
+            <button class="chip" onclick="setCacheLimit(240)">240 MB Cap</button>
+            <button class="chip active" onclick="setCacheLimit(400)">400 MB Cap</button>
+            <button class="pill-secondary" onclick="wipeEngineCache()">Wipe Piece Cache</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- DETAIL OVERLAY (MOVIES & SERIES + STREAM RACER) -->
+<div id="detailOverlay">
+  <div class="detail-hero">
+    <img class="detail-bg" id="detailBg" src="" alt="">
+    <div class="detail-scrim"></div>
+    <div class="detail-inner">
+      <button class="pill-secondary" style="margin-bottom:18px;" onclick="closeDetail()">← Back</button>
+      <div class="hero-kicker" id="detailKicker">FILM · 4K HDR</div>
+      <div class="hero-title" id="detailTitle">Title</div>
+      <div class="hero-stats" id="detailStats"></div>
+      <div class="hero-desc" id="detailDesc" style="-webkit-line-clamp:4; margin-top:10px;"></div>
+      <div class="hero-btns">
+        <button class="pill-primary" id="detailPlayBestBtn" onclick="playBestStream()">▶ Play Best Stream</button>
+        <button class="pill-secondary" id="detailListBtn" onclick="toggleDetailMyList()">+ My List</button>
+      </div>
+    </div>
+  </div>
+  <div class="detail-body">
+    <div id="seriesEpisodesBlock" style="display:none; margin-bottom:28px;">
+      <div class="shelf-header"><span>Seasons &amp; Episodes</span></div>
+      <div class="chip-row" id="seasonChipsRow"></div>
+      <div class="ep-grid" id="episodesGrid"></div>
+    </div>
+    <div class="shelf-header">
+      <span id="streamsHeading">Available Streams</span>
+      <span id="streamsSubLabel" style="font-size:12px; color:#94a3b8; font-weight:600;">Racing Torrentio + Comet + MediaFusion...</span>
+    </div>
+    <div class="stream-list" id="streamListContainer"></div>
+  </div>
+</div>
+
+<!-- FULLSCREEN CINEMA & LIVE TV PLAYER (SINGLE MINIMALIST HUD + WEBGL2 GPU UPSCALER) -->
+<div id="playerOverlay">
+  <div class="player-stage" id="playerStage" onmousemove="wakeHud()" onclick="handleStageClick(event)" ondblclick="handleStageDblClick(event)">
+    <video id="noirVideo" playsinline autoplay></video>
+    <canvas id="noirGpuCanvas"></canvas>
+
+    <!-- STREMIO-STYLE 4K ARTWORK & FILLING TITLE-LOGO LOADER -->
+    <div id="stremioLoader" onclick="event.stopPropagation()">
+      <img class="stremio-backdrop" id="stremioBackdrop" src="" alt="">
+      <div class="stremio-scrim"></div>
+      <div class="stremio-center">
+        <img class="stremio-live-emblem" id="stremioLiveEmblem" src="" alt="">
+        <div class="stremio-logo-wrap" id="stremioLogoWrap">
+          <img class="stremio-logo-img stremio-logo-dim" id="stremioLogoDim" src="" alt="" style="display:none;">
+          <img class="stremio-logo-img stremio-logo-fill" id="stremioLogoFill" src="" alt="" style="display:none;">
+          <div class="stremio-wordmark dim" id="stremioWordDim">NOCTURNE</div>
+          <div class="stremio-wordmark fill" id="stremioWordFill">NOCTURNE</div>
+        </div>
+        <div class="stremio-ep-line" id="stremioEpLine"></div>
+        <div class="stremio-meta-line">
+          <img class="stremio-meta-spider" src="/icon.png" alt="">
+          <span id="stremioStatusText">Initializing stream...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="player-buffer-banner" id="playerBufferBanner">Buffering...</div>
+
+    <div class="player-hud-top" onclick="event.stopPropagation()">
+      <div class="player-top-left">
+        <button class="p-icon-btn" onclick="closePlayer()" title="Back (Esc)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="player-title-stack">
+          <div class="player-title" id="playerTitle">NOCTURNE</div>
+          <div class="player-badge" id="playerBadge"></div>
+        </div>
+      </div>
+      <div class="player-group">
+        <button class="p-text-btn" id="btnGpuEnhance" onclick="cycleGpuEnhance()" title="Cycle Hardware GPU Upscaler (G)">
+          <span class="gpu-dot"></span>
+          <span id="gpuEnhanceLabel">Upscale</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="player-hud-bottom" onclick="event.stopPropagation()">
+      <div class="player-scrub-wrap" id="playerScrubWrap">
+        <span class="player-time" id="playerCurTime">00:00</span>
+        <div class="player-scrub-track" id="playerScrubTrack" onclick="seekFromScrub(event)">
+          <div class="player-scrub-rail">
+            <div class="player-scrub-fill" id="playerScrubFill"></div>
+          </div>
+        </div>
+        <span class="player-time" id="playerDurTime">00:00</span>
+      </div>
+
+      <div class="player-controls-row">
+        <div class="player-group">
+          <button class="p-icon-btn" id="btnHudPlayPause" onclick="toggleVideoPlay()" title="Play / Pause (Space)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+          </button>
+          <button class="p-icon-btn" id="btnHudSeekBack" style="display:none;" onclick="seekDelta(-10)" title="Rewind 10s">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><text x="12" y="15.5" text-anchor="middle" font-size="7.5" font-weight="700" fill="currentColor" stroke="none">10</text></svg>
+          </button>
+          <button class="p-icon-btn" id="btnHudSeekFwd" style="display:none;" onclick="seekDelta(10)" title="Forward 10s">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/><text x="12" y="15.5" text-anchor="middle" font-size="7.5" font-weight="700" fill="currentColor" stroke="none">10</text></svg>
+          </button>
+          <button class="p-icon-btn" id="btnHudZapPrev" style="display:none;" onclick="zapLive(-1)" title="Previous Channel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20" fill="currentColor" stroke="none"/><line x1="5" y1="5" x2="5" y2="19"/></svg>
+          </button>
+          <button class="p-icon-btn" id="btnHudZapNext" style="display:none;" onclick="zapLive(1)" title="Next Channel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4" fill="currentColor" stroke="none"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+          </button>
+          <div class="player-vol-wrap">
+            <button class="p-icon-btn" id="btnHudMute" onclick="toggleMute()" title="Mute (M)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            </button>
+            <input class="player-vol-slider" id="playerVolSlider" type="range" min="0" max="1" step="0.02" value="1" oninput="setPlayerVolume(this.value)">
+          </div>
+        </div>
+        <div class="player-group">
+          <button class="p-text-btn" id="btnHudSkipIntro" style="display:none;" onclick="skipIntro()">Skip Intro</button>
+          <button class="p-icon-btn" onclick="toggleDrawer('sources')" title="Streams & Feeds">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 12 12 17 22 12"/><polyline points="2 17 12 22 22 17"/></svg>
+          </button>
+          <button class="p-icon-btn" id="btnHudAudio" onclick="toggleDrawer('audio')" title="Audio Language">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          </button>
+          <button class="p-icon-btn" id="btnHudSubs" onclick="toggleDrawer('subs')" title="Subtitles">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M7 13h4"/><path d="M13 13h4"/><path d="M7 10h2"/><path d="M11 10h6"/></svg>
+          </button>
+          <button class="p-icon-btn" id="btnHudFullscreen" onclick="toggleFullscreen()" title="Fullscreen (F)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="player-drawer" id="playerDrawer" onclick="event.stopPropagation()"></div>
+  </div>
+</div>
+
+<script>
+let ENGINE_TOKEN = "";
+let WIFI_PROFILE = "balanced";
+let UI_MODE = "auto";
+let appState = { profile: "balanced", continueWatching: [], myList: [] };
+
+let homeData = { movies: [], series: [], cartoons: [] };
+let currentHero = null;
+let browseCat = "all";
+let browseGenre = "Popular";
+let browseLoaded = false;
+
+let liveChannels = [];
+let liveGroup = "VIP";
+let currentLiveCh = null;
+let liveLoaded = false;
+
+let detailItem = null;
+let detailMeta = null;
+let detailStreams = [];
+let detailSeason = 1;
+let detailEpisode = 1;
+
+let activeHls = null;
+let playerMode = "vod"; // "vod" or "live"
+let activeLiveIdx = 0;
+let activeLiveFeedIdx = 0;
+let activeVodStreams = [];
+let activeVodIdx = 0;
+let activeSubtitles = [];
+let activeTorrentHash = "";
+let statsTimer = null;
+let hudTimer = null;
+let blackScreenWatchdog = null;
+let gpuEnhanceLevel = 0; // 0=OFF, 1=Anime4K, 2=RTX Sharp
+let playbackSession = "pc-" + Math.random().toString(36).slice(2, 10);
+
+function detectAutoPlatform() {
+  const isCoarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  const ua = navigator.userAgent.toLowerCase();
+  const isTvUa = ua.includes("android tv") || ua.includes("smart-tv") || ua.includes("tizen") || ua.includes("webos");
+  return (isTvUa || (isCoarse && window.innerWidth >= 900)) ? "tv" : "pc";
+}
+
+function applyUiMode(mode) {
+  UI_MODE = mode;
+  const eff = (mode === "auto") ? detectAutoPlatform() : mode;
+  document.body.classList.remove("mode-pc", "mode-tv");
+  document.body.classList.add("mode-" + eff);
+  const label = eff === "tv" ? "TV 10-FOOT UI" : "PC DESKTOP";
+  const profTxt = WIFI_PROFILE === "balanced" ? "BALANCED WI-FI" : "4K FIBER";
+  document.getElementById("gatePlatformLabel").textContent = `AUTO-DETECTED: ${label} · ${profTxt} ENGINE READY`;
+  document.getElementById("topProfileBadge").textContent = `${label} · ${profTxt}`;
+  ["uiAuto","uiPc","uiTv"].forEach(id => document.getElementById(id).classList.remove("active"));
+  document.getElementById(mode === "pc" ? "uiPc" : (mode === "tv" ? "uiTv" : "uiAuto")).classList.add("active");
+}
+
+function setUiMode(m) { applyUiMode(m); }
+
+async function engineFetch(path, opts = {}) {
+  opts.headers = Object.assign({ "X-Engine-Token": ENGINE_TOKEN }, opts.headers || {});
+  return fetch(path, opts);
+}
+
+async function persistState() {
+  appState.profile = WIFI_PROFILE;
+  try {
+    await fetch("/pc/state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(appState),
+    });
+  } catch (e) {}
+}
+
+function openGate() {
+  document.getElementById("noirGate").classList.remove("hidden");
+  setTimeout(() => document.getElementById("gateMoviesBtn").focus(), 60);
+}
+
+function enterMode(tab) {
+  document.getElementById("noirGate").classList.add("hidden");
+  switchTab(tab);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll(".rail-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + tab).classList.add("active");
+
+  if (tab === "browse" && !browseLoaded) loadBrowseCatalog();
+  if (tab === "livetv" && !liveLoaded) loadLiveChannels();
+  if (tab === "library") renderLibrary();
+  if (tab === "settings") refreshTelemetry();
+  if (tab === "search") setTimeout(() => document.getElementById("cinemaSearchInput").focus(), 40);
+}
+
+/* =====================================================================
+   HOME & CINEMA CATALOG
+   ===================================================================== */
+async function loadHome() {
+  try {
+    const res = await fetch("/pc/catalog?category=home");
+    homeData = await res.json();
+    renderPosterShelf("rowMovies", homeData.movies || []);
+    renderPosterShelf("rowSeries", homeData.series || []);
+    renderPosterShelf("rowCartoons", homeData.cartoons || []);
+    const hero = (homeData.movies || [])[0] || (homeData.cartoons || [])[0];
+    if (hero) setHomeHero(hero);
+    renderContinueWatching();
+  } catch (e) {}
+}
+
+function setHomeHero(item) {
+  currentHero = item;
+  document.getElementById("homeHeroBg").src = item.backdrop || item.poster;
+  document.getElementById("homeHeroKicker").textContent = `NOCTURNE · ${(item.type || "FILM").toUpperCase()} · 4K HDR`;
+  document.getElementById("homeHeroTitle").textContent = (item.name || "").split(" (")[0].toUpperCase();
+  document.getElementById("homeHeroRating").textContent = `★ ${item.imdbRating || "8.5"}`;
+  document.getElementById("homeHeroYear").textContent = item.year || "Featured";
+  document.getElementById("homeHeroGenres").textContent = (item.genres || []).slice(0, 3).join(" · ") || "NOCTURNE Spotlight";
+  document.getElementById("homeHeroDesc").textContent = item.description || "Stream seamlessly via NOCTURNE's rolling piece engine.";
+  syncHeroListBtn();
+}
+
+function syncHeroListBtn() {
+  if (!currentHero) return;
+  const inList = (appState.myList || []).some(x => x.id === currentHero.id);
+  document.getElementById("homeHeroListBtn").textContent = inList ? "✓ In My List" : "+ My List";
+}
+
+function renderPosterShelf(containerId, items) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = "";
+  items.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "poster-card";
+    card.tabIndex = 0;
+    card.onmouseenter = () => setHomeHero(item);
+    card.onfocus = () => setHomeHero(item);
+    card.onclick = () => openDetail(item);
+    card.innerHTML = `
+      <img class="poster-img" src="${item.poster}" alt="" loading="lazy">
+      <div class="poster-info">
+        <div class="poster-title">${(item.name || "").split(" (")[0]}</div>
+        <div class="poster-sub">${item.year ? item.year + " · " : ""}${item.type === "movie" ? "Movie" : "Series"}</div>
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+function renderContinueWatching() {
+  const list = appState.continueWatching || [];
+  const sec = document.getElementById("cwSection");
+  const row = document.getElementById("rowContinue");
+  if (!list.length) { sec.style.display = "none"; return; }
+  sec.style.display = "block";
+  row.innerHTML = "";
+  list.slice(0, 12).forEach(cw => {
+    const c = document.createElement("div");
+    c.className = "cw-card";
+    c.tabIndex = 0;
+    c.onclick = () => openDetail(cw);
+    const pct = cw.duration > 0 ? Math.min(100, Math.max(4, (cw.position / cw.duration) * 100)) : 12;
+    c.innerHTML = `
+      <div class="cw-thumb-box">
+        <img src="${cw.backdrop || cw.poster}" alt="">
+        <div class="cw-progress-track"><div class="cw-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="poster-info">
+        <div class="poster-title">${cw.name}</div>
+        <div class="poster-sub">${cw.type === "series" ? `S${cw.season || 1} · E${cw.episode || 1}` : "Resume"}</div>
+      </div>`;
+    row.appendChild(c);
+  });
+}
+
+function playHeroNow() { if (currentHero) openDetail(currentHero, true); }
+function openHeroDetail() { if (currentHero) openDetail(currentHero, false); }
+function toggleHeroMyList() {
+  if (!currentHero) return;
+  toggleMyListItem(currentHero);
+  syncHeroListBtn();
+}
+
+function toggleMyListItem(item) {
+  const idx = (appState.myList || []).findIndex(x => x.id === item.id);
+  if (idx >= 0) appState.myList.splice(idx, 1);
+  else appState.myList.unshift(item);
+  persistState();
+}
+
+/* =====================================================================
+   SEARCH, BROWSE & LIBRARY
+   ===================================================================== */
+let searchDebounce = null;
+let searchType = "all";
+function setSearchType(t, btn) {
+  searchType = t;
+  document.querySelectorAll("#searchTypeChips .chip").forEach(c => c.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  if (document.getElementById("cinemaSearchInput").value.trim().length >= 2) runCinemaSearch();
+}
+function debouncedCinemaSearch() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(runCinemaSearch, 280);
+}
+function quickSearch(q) {
+  document.getElementById("cinemaSearchInput").value = q;
+  runCinemaSearch();
+}
+async function runCinemaSearch() {
+  const q = document.getElementById("cinemaSearchInput").value.trim();
+  const status = document.getElementById("searchStatus");
+  const grid = document.getElementById("searchGrid");
+  if (q.length < 2) { grid.innerHTML = ""; status.textContent = "Type at least 2 characters..."; return; }
+  status.textContent = `Searching "${q}"...`;
+  try {
+    const res = await fetch(`/pc/search?q=${encodeURIComponent(q)}&type=${encodeURIComponent(searchType)}`);
+    const data = await res.json();
+    const items = data.items || [];
+    status.textContent = items.length ? `${items.length} matches for "${q}"` : `No matches found for "${q}".`;
+    renderCatalogGrid("searchGrid", items);
+  } catch (e) { status.textContent = "Search failed."; }
+}
+
+function setBrowseCat(cat, btn) {
+  browseCat = cat;
+  document.querySelectorAll("#browseCatChips .chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+  loadBrowseCatalog();
+}
+function setBrowseGenre(g, btn) {
+  browseGenre = g;
+  document.querySelectorAll("#browseGenreChips .chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+  loadBrowseCatalog();
+}
+async function loadBrowseCatalog() {
+  browseLoaded = true;
+  document.getElementById("browseStatus").textContent = "Loading catalog...";
+  try {
+    const res = await fetch(`/pc/catalog?category=${encodeURIComponent(browseCat)}&genre=${encodeURIComponent(browseGenre)}`);
+    const data = await res.json();
+    const items = data.items || [];
+    document.getElementById("browseStatus").textContent = `${items.length} titles ready`;
+    renderCatalogGrid("browseGrid", items);
+  } catch (e) { document.getElementById("browseStatus").textContent = "Failed to load catalog."; }
+}
+
+function renderCatalogGrid(gridId, items) {
+  const el = document.getElementById(gridId);
+  el.innerHTML = "";
+  items.forEach(item => {
+    if (!item.poster) return;
+    const card = document.createElement("div");
+    card.className = "poster-card";
+    card.style.width = "100%";
+    card.tabIndex = 0;
+    card.onclick = () => openDetail(item);
+    const metaParts = [];
+    if (item.imdbRating) metaParts.push(`★ ${item.imdbRating}`);
+    if (item.year) metaParts.push(item.year);
+    metaParts.push((item.id || "").startsWith("kitsu:") ? "Anime" : (item.type === "movie" ? "Movie" : "Series"));
+    card.innerHTML = `
+      <img class="poster-img" src="${item.poster}" alt="" loading="lazy" onerror="this.closest('.poster-card').style.display='none';">
+      <div class="poster-info">
+        <div class="poster-title">${(item.name || "").split(" (")[0]}</div>
+        <div class="poster-sub">${metaParts.join(" · ")}</div>
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+function renderLibrary() {
+  const list = appState.myList || [];
+  document.getElementById("libraryEmpty").style.display = list.length ? "none" : "block";
+  renderCatalogGrid("libraryGrid", list);
+}
+
+/* =====================================================================
+   MOVIE & SERIES DETAIL + PARALLEL STREAM RACER
+   ===================================================================== */
+async function openDetail(item, autoPlayBest = false) {
+  detailItem = item;
+  detailSeason = item.season || 1;
+  detailEpisode = item.episode || 1;
+  detailStreams = [];
+  document.getElementById("detailOverlay").classList.add("open");
+  document.getElementById("detailBg").src = item.backdrop || item.poster;
+  document.getElementById("detailKicker").textContent = `${(item.type || "FILM").toUpperCase()} · ${WIFI_PROFILE === "balanced" ? "MEH WI-FI FAST-START" : "4K FIBER"}`;
+  document.getElementById("detailTitle").textContent = item.name;
+  document.getElementById("detailStats").innerHTML = `<span>★ ${item.imdbRating || "8.4"}</span><span class="hero-year-pill">${item.year || ""}</span>`;
+  document.getElementById("detailDesc").textContent = item.description || "Fetching metadata...";
+  syncDetailListBtn();
+
+  const isSeries = item.type !== "movie";
+  document.getElementById("seriesEpisodesBlock").style.display = isSeries ? "block" : "none";
+  document.getElementById("episodesGrid").innerHTML = "";
+  document.getElementById("seasonChipsRow").innerHTML = "";
+
+  // Fetch deep metadata & streams in parallel
+  fetch(`/pc/meta?type=${encodeURIComponent(item.type || "movie")}&id=${encodeURIComponent(item.id)}`)
+    .then(r => r.json())
+    .then(meta => {
+      if (!detailItem || detailItem.id !== item.id) return;
+      detailMeta = meta;
+      if (meta.background) document.getElementById("detailBg").src = meta.background;
+      if (meta.description) document.getElementById("detailDesc").textContent = meta.description;
+      if (isSeries && meta.videos && meta.videos.length) {
+        renderSeasonsAndEpisodes(meta.videos);
+      }
+    }).catch(() => {});
+
+  await loadDetailStreams(autoPlayBest);
+}
+
+function closeDetail() {
+  document.getElementById("detailOverlay").classList.remove("open");
+}
+
+function syncDetailListBtn() {
+  if (!detailItem) return;
+  const inList = (appState.myList || []).some(x => x.id === detailItem.id);
+  document.getElementById("detailListBtn").textContent = inList ? "✓ In My List" : "+ My List";
+}
+function toggleDetailMyList() {
+  if (!detailItem) return;
+  toggleMyListItem(detailItem);
+  syncDetailListBtn();
+}
+
+function renderSeasonsAndEpisodes(videos) {
+  const bySeason = {};
+  videos.forEach(v => {
+    const s = v.season || 1;
+    if (s <= 0) return;
+    if (!bySeason[s]) bySeason[s] = [];
+    bySeason[s].push(v);
+  });
+  const seasons = Object.keys(bySeason).map(Number).sort((a,b) => a - b);
+  if (!seasons.length) return;
+  if (!bySeason[detailSeason]) detailSeason = seasons[0];
+
+  const chipRow = document.getElementById("seasonChipsRow");
+  chipRow.innerHTML = "";
+  seasons.forEach(s => {
+    const b = document.createElement("button");
+    b.className = "chip" + (s === detailSeason ? " active" : "");
+    b.textContent = `Season ${s}`;
+    b.onclick = () => {
+      detailSeason = s;
+      renderSeasonsAndEpisodes(videos);
+    };
+    chipRow.appendChild(b);
+  });
+
+  const grid = document.getElementById("episodesGrid");
+  grid.innerHTML = "";
+  (bySeason[detailSeason] || []).forEach(ep => {
+    const c = document.createElement("div");
+    c.className = "ep-card";
+    c.tabIndex = 0;
+    c.onclick = () => {
+      detailSeason = ep.season || detailSeason;
+      detailEpisode = ep.episode || 1;
+      loadDetailStreams(true);
+    };
+    c.innerHTML = `
+      <img src="${ep.thumbnail || (detailMeta && detailMeta.background) || detailItem.poster}" alt="" loading="lazy">
+      <div class="ep-card-body">
+        <div class="ep-card-title">E${String(ep.episode).padStart(2,"0")} — ${ep.title}</div>
+        <div class="ep-card-desc">${ep.overview || "Click to race instant streams."}</div>
+      </div>`;
+    grid.appendChild(c);
+  });
+}
+
+async function loadDetailStreams(autoPlay = false) {
+  if (!detailItem) return;
+  const heading = document.getElementById("streamsHeading");
+  const sub = document.getElementById("streamsSubLabel");
+  const box = document.getElementById("streamListContainer");
+  heading.textContent = detailItem.type === "movie" ? "Movie Streams" : `Streams — S${String(detailSeason).padStart(2,"0")} · E${String(detailEpisode).padStart(2,"0")}`;
+  sub.textContent = `Racing Torrentio + Comet + MediaFusion (${WIFI_PROFILE === "balanced" ? "Meh Wi-Fi Fast-Start" : "4K Fiber"})...`;
+  box.innerHTML = "";
+
+  try {
+    const res = await fetch(`/pc/streams?type=${encodeURIComponent(detailItem.type || "movie")}&id=${encodeURIComponent(detailItem.id)}&season=${detailSeason}&episode=${detailEpisode}&profile=${WIFI_PROFILE}`);
+    const data = await res.json();
+    detailStreams = data.streams || [];
+    sub.textContent = `${detailStreams.length} streams ranked (${WIFI_PROFILE === "balanced" ? "Zero-Buffer 1080p First" : "4K UHD First"})`;
+    if (!detailStreams.length) {
+      box.innerHTML = `<div style="color:#94a3b8; font-size:13px;">No streams found for this selection.</div>`;
+      return;
+    }
+    detailStreams.forEach((s, idx) => {
+      const row = document.createElement("div");
+      row.className = "stream-row";
+      row.tabIndex = 0;
+      row.onclick = () => startVodPlayback(detailStreams, idx);
+      const is4k = (s.quality || "").startsWith("4K");
+      const pickBadge = idx === 0 ? `<span style="color:#10b981; font-weight:800;">★ BEST FOR YOUR WI-FI</span>` : "";
+      row.innerHTML = `
+        <div class="stream-q ${is4k ? "q4k" : ""}">${s.quality}</div>
+        <div class="stream-main">
+          <div class="stream-name">${s.releaseTitle || s.title}</div>
+          <div class="stream-meta">
+            ${pickBadge}
+            <span>${s.isDirect ? "● Instant Direct HTTPS" : `● ${s.seeders} peers`}</span>
+            ${s.sizeText ? `<span>${s.sizeText}</span>` : ""}
+            ${s.codecTags ? `<span>${s.codecTags}</span>` : ""}
+          </div>
+        </div>
+        <button class="pill-primary" style="height:32px; padding:0 14px;">▶ Play</button>`;
+      box.appendChild(row);
+    });
+    if (autoPlay && detailStreams.length > 0) {
+      startVodPlayback(detailStreams, 0);
+    }
+  } catch (e) {
+    sub.textContent = "Stream race error.";
+  }
+}
+
+function playBestStream() {
+  if (detailStreams.length > 0) startVodPlayback(detailStreams, 0);
+  else loadDetailStreams(true);
+}
+
+/* =====================================================================
+   LIVE TV CHANNELS STUDIO (35,676+ OFFICIAL LOGOS)
+   ===================================================================== */
+let liveFilterTimer = null;
+function debouncedLiveFilter() {
+  clearTimeout(liveFilterTimer);
+  liveFilterTimer = setTimeout(loadLiveChannels, 200);
+}
+function setLiveGroup(g, btn) {
+  liveGroup = g;
+  document.querySelectorAll("#liveCatChips .chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+  loadLiveChannels();
+}
+async function loadLiveChannels() {
+  liveLoaded = true;
+  const q = document.getElementById("liveFilterInput").value.trim();
+  const status = document.getElementById("liveStatus");
+  status.textContent = "Harvesting satellite headends & 35,676 official channel logos...";
+  try {
+    const res = await fetch(`/live/channels?group=${encodeURIComponent(liveGroup)}&search=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    liveChannels = data.channels || [];
+    status.textContent = `${liveChannels.length} channels ready (${(data.total || liveChannels.length).toLocaleString()} indexed)`;
+    renderLiveGrid();
+    if (liveChannels.length > 0 && (!currentLiveCh || !liveChannels.some(c => c.id === currentLiveCh.id))) {
+      bindLiveHero(liveChannels[0]);
+    }
+  } catch (e) {
+    status.textContent = "Failed to load channels.";
+  }
+}
+
+function bindLiveHero(ch) {
+  currentLiveCh = ch;
+  document.getElementById("liveHeroTitle").textContent = ch.name;
+  const feeds = (ch.backups && ch.backups.length) ? ch.backups.length : 1;
+  document.getElementById("liveHeroBadge").textContent = `${ch.verified ? "★" : "●"} LIVE · ${ch.quality}`;
+  document.getElementById("liveHeroGroup").textContent = `${ch.group} · ${ch.source}`;
+  document.getElementById("liveHeroFeedBtn").textContent = `Feeds (${feeds})`;
+
+  const mono = document.getElementById("liveHeroMono");
+  const img = document.getElementById("liveHeroLogo");
+  mono.textContent = ch.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 4).toUpperCase() || "TV";
+  if (ch.logo) {
+    mono.style.display = "block";
+    img.style.display = "none";
+    img.onload = () => { mono.style.display = "none"; img.style.display = "block"; };
+    img.onerror = () => { mono.style.display = "block"; img.style.display = "none"; };
+    img.src = ch.logo;
+  } else {
+    mono.style.display = "block";
+    img.style.display = "none";
+  }
+}
+
+function renderLiveGrid() {
+  const grid = document.getElementById("liveGrid");
+  grid.innerHTML = "";
+  liveChannels.forEach((ch, idx) => {
+    const card = document.createElement("div");
+    card.className = "live-card";
+    card.tabIndex = 0;
+    card.onmouseenter = () => bindLiveHero(ch);
+    card.onfocus = () => bindLiveHero(ch);
+    card.onclick = () => { bindLiveHero(ch); startLivePlayback(idx, 0); };
+
+    const mono = ch.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 4).toUpperCase() || "TV";
+    const feeds = (ch.backups && ch.backups.length) ? ch.backups.length : 1;
+    const qShort = (ch.quality || "HD").replace(" FHD", "").replace(" UHD", "");
+
+    card.innerHTML = `
+      <div class="logo-stage live-card-stage">
+        <span class="logo-mono">${mono}</span>
+        ${ch.logo ? `<img src="${ch.logo}" alt="" loading="lazy" style="display:none;" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.style.display='none'; this.previousElementSibling.style.display='block';">` : ""}
+      </div>
+      <div class="live-card-footer">
+        <div class="live-card-name">${ch.name}</div>
+        <div class="live-card-meta">
+          <span style="color:#10b981;">${ch.verified ? "★ LIVE" : "● LIVE"}</span>
+          <span style="color:#cbd5e1; margin-left:8px;">${qShort}</span>
+          <span class="spacer"></span>
+          <span style="color:#7c8599;">${feeds > 1 ? feeds + " FEEDS" : "DIRECT"}</span>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function watchCurrentLiveChannel(feedIdx) {
+  if (!currentLiveCh) return;
+  const idx = Math.max(0, liveChannels.findIndex(c => c.id === currentLiveCh.id));
+  startLivePlayback(idx, feedIdx);
+}
+function cycleLiveFeedPicker() {
+  if (!currentLiveCh) return;
+  const idx = Math.max(0, liveChannels.findIndex(c => c.id === currentLiveCh.id));
+  startLivePlayback(idx, 0);
+  setTimeout(() => toggleDrawer("sources"), 150);
+}
+
+/* =====================================================================
+   REAL HARDWARE WEBGL2 GPU UPSCALER (FSR-EASU + RCAS + ANIME4K)
+   Operates strictly in BT.709 Luma space -> ZERO color/saturation shift!
+   ===================================================================== */
+const NoirGpuUpscaler = (() => {
+  let gl = null;
+  let canvas = null;
+  let video = null;
+  let tex = null;
+  let progFsr = null;
+  let progAnime = null;
+  let mode = 0; // 0=OFF, 1=FSR+RCAS Cinema, 2=Anime4K Restore
+  let active = false;
+  let vfcId = null;
+  let rafId = null;
+  let gpuShortName = "GPU";
+
+  const VERT_SRC = `#version 300 es
+    precision highp float;
+    const vec2 POS[4] = vec2[4](
+      vec2(-1.0, -1.0), vec2(1.0, -1.0),
+      vec2(-1.0,  1.0), vec2(1.0,  1.0)
+    );
+    out vec2 vUv;
+    void main() {
+      vec2 p = POS[gl_VertexID];
+      vUv = vec2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5);
+      gl_Position = vec4(p, 0.0, 1.0);
+    }`;
+
+  // PASS: Directional Edge-Adaptive Lanczos + AMD FidelityFX RCAS (Pure BT.709 Luma-Only)
+  const FRAG_FSR_RCAS = `#version 300 es
+    precision highp float;
+    uniform sampler2D uTex;
+    uniform vec2 uSrcSize;
+    uniform vec2 uDstSize;
+    in vec2 vUv;
+    out vec4 outColor;
+
+    float luma(vec3 c) {
+      return dot(c, vec3(0.2126, 0.7152, 0.0722));
+    }
+
+    // Smooth edge-directed 12-tap anti-ringing upscale
+    vec3 sampleEasu(vec2 uv, vec2 invSrc) {
+      vec2 fc = uv * uSrcSize - 0.5;
+      vec2 fp = fract(fc);
+      vec2 base = (floor(fc) + 0.5) * invSrc;
+
+      vec3 c00 = texture(uTex, base).rgb;
+      vec3 c10 = texture(uTex, base + vec2(invSrc.x, 0.0)).rgb;
+      vec3 c01 = texture(uTex, base + vec2(0.0, invSrc.y)).rgb;
+      vec3 c11 = texture(uTex, base + invSrc).rgb;
+
+      // Local 4-neighbor clamp bounds prevent ALL ringing/halo artifacts
+      vec3 min4 = min(min(c00, c10), min(c01, c11));
+      vec3 max4 = max(max(c00, c10), max(c01, c11));
+
+      // Compute edge direction from surrounding luma gradient
+      float l00 = luma(c00), l10 = luma(c10), l01 = luma(c01), l11 = luma(c11);
+      float gx = (l10 + l11) - (l00 + l01);
+      float gy = (l01 + l11) - (l00 + l10);
+      float gLen = length(vec2(gx, gy));
+
+      // Bicubic Catmull-Rom 1D weights on x & y for crisp subpixel reconstruction
+      vec2 t = fp;
+      vec2 t2 = t * t;
+      vec2 t3 = t2 * t;
+      vec2 w0 = -0.5 * t3 + t2 - 0.5 * t;
+      vec2 w1 =  1.5 * t3 - 2.5 * t2 + 1.0;
+      vec2 w2 = -1.5 * t3 + 2.0 * t2 + 0.5 * t;
+      vec2 w3 =  0.5 * t3 - 0.5 * t2;
+
+      // Fast 4-row Catmull-Rom along X then Y using hardware bilinear where appropriate
+      vec3 row0 = texture(uTex, base + vec2(-invSrc.x, -invSrc.y)).rgb * w0.x
+                + texture(uTex, base + vec2(0.0,       -invSrc.y)).rgb * w1.x
+                + texture(uTex, base + vec2(invSrc.x,  -invSrc.y)).rgb * w2.x
+                + texture(uTex, base + vec2(2.0*invSrc.x,-invSrc.y)).rgb * w3.x;
+      vec3 row1 = texture(uTex, base + vec2(-invSrc.x, 0.0)).rgb * w0.x
+                + c00 * w1.x + c10 * w2.x
+                + texture(uTex, base + vec2(2.0*invSrc.x, 0.0)).rgb * w3.x;
+      vec3 row2 = texture(uTex, base + vec2(-invSrc.x, invSrc.y)).rgb * w0.x
+                + c01 * w1.x + c11 * w2.x
+                + texture(uTex, base + vec2(2.0*invSrc.x, invSrc.y)).rgb * w3.x;
+      vec3 row3 = texture(uTex, base + vec2(-invSrc.x, 2.0*invSrc.y)).rgb * w0.x
+                + texture(uTex, base + vec2(0.0,       2.0*invSrc.y)).rgb * w1.x
+                + texture(uTex, base + vec2(invSrc.x,  2.0*invSrc.y)).rgb * w2.x
+                + texture(uTex, base + vec2(2.0*invSrc.x,2.0*invSrc.y)).rgb * w3.x;
+
+      vec3 cubic = row0 * w0.y + row1 * w1.y + row2 * w2.y + row3 * w3.y;
+
+      // Directional anti-aliasing along diagonal edges when gradient is strong
+      if (gLen > 0.03) {
+        vec2 tangent = normalize(vec2(-gy, gx)) * invSrc * 0.35;
+        vec3 along = 0.5 * (texture(uTex, uv + tangent).rgb + texture(uTex, uv - tangent).rgb);
+        float blend = clamp((gLen - 0.03) * 2.2, 0.0, 0.32);
+        cubic = mix(cubic, along, blend);
+      }
+
+      // Strictly anti-ringed inside local texel min/max
+      return clamp(cubic, min4, max4);
+    }
+
+    void main() {
+      vec2 invSrc = 1.0 / uSrcSize;
+      vec2 invDst = 1.0 / uDstSize;
+      // Use smaller step so RCAS refines native upscaled detail cleanly
+      vec2 stepPx = max(invDst, invSrc * 0.65);
+
+      vec3 e = sampleEasu(vUv, invSrc);
+      vec3 n = texture(uTex, vUv + vec2(0.0, -stepPx.y)).rgb;
+      vec3 s = texture(uTex, vUv + vec2(0.0,  stepPx.y)).rgb;
+      vec3 w = texture(uTex, vUv + vec2(-stepPx.x, 0.0)).rgb;
+      vec3 r = texture(uTex, vUv + vec2( stepPx.x, 0.0)).rgb;
+
+      // AMD FidelityFX RCAS strictly in BT.709 Luma space -> ZERO color/saturation distortion!
+      float le = luma(e);
+      float ln = luma(n), ls = luma(s), lw = luma(w), lr = luma(r);
+
+      float minL = min(le, min(min(ln, ls), min(lw, lr)));
+      float maxL = max(le, max(max(ln, ls), max(lw, lr)));
+
+      // Adaptive negative lobe: sharpens soft detail, backs off on already-sharp/noisy edges
+      float hitMin = minL / max(4.0 * maxL, 1e-4);
+      float hitMax = (1.0 - maxL) / max(4.0 * (1.0 - minL), 1e-4);
+      float lobe = max(-hitMin, -hitMax);
+      // Scale strength smoothly with upscale ratio (stronger on 720p->1440p, subtle on native 4K)
+      float upscaleFactor = clamp(uDstSize.y / max(uSrcSize.y, 1.0), 1.0, 2.5);
+      float sharpness = mix(0.45, 0.82, clamp((upscaleFactor - 1.0) / 1.2, 0.0, 1.0));
+      float weight = clamp(lobe, -0.22, 0.0) * sharpness;
+
+      float sharpL = (weight * (ln + ls + lw + lr) + le) / (1.0 + 4.0 * weight);
+      // Apply pure luma delta without shifting hue or saturation
+      float deltaL = clamp(sharpL - le, -0.18, 0.18);
+      vec3 res = clamp(e + vec3(deltaL), 0.0, 1.0);
+      outColor = vec4(res, 1.0);
+    }`;
+
+  // PASS: Anime4K Sobel Gradient-Guided Line Restoration & Thinning (Pure Luma-Preserving)
+  const FRAG_ANIME4K = `#version 300 es
+    precision highp float;
+    uniform sampler2D uTex;
+    uniform vec2 uSrcSize;
+    uniform vec2 uDstSize;
+    in vec2 vUv;
+    out vec4 outColor;
+
+    float luma(vec3 c) {
+      return dot(c, vec3(0.2126, 0.7152, 0.0722));
+    }
+
+    void main() {
+      vec2 px = 1.0 / uSrcSize;
+
+      // 3x3 Sobel luma gradient to detect cartoon/anime line borders
+      float tl = luma(texture(uTex, vUv + vec2(-px.x, -px.y)).rgb);
+      float tc = luma(texture(uTex, vUv + vec2( 0.0,  -px.y)).rgb);
+      float tr = luma(texture(uTex, vUv + vec2( px.x, -px.y)).rgb);
+      float ml = luma(texture(uTex, vUv + vec2(-px.x,  0.0 )).rgb);
+      vec3  mcRgb = texture(uTex, vUv).rgb;
+      float mc = luma(mcRgb);
+      float mr = luma(texture(uTex, vUv + vec2( px.x,  0.0 )).rgb);
+      float bl = luma(texture(uTex, vUv + vec2(-px.x,  px.y)).rgb);
+      float bc = luma(texture(uTex, vUv + vec2( 0.0,   px.y)).rgb);
+      float br = luma(texture(uTex, vUv + vec2( px.x,  px.y)).rgb);
+
+      float gx = (tr + 2.0 * mr + br) - (tl + 2.0 * ml + bl);
+      float gy = (bl + 2.0 * bc + br) - (tl + 2.0 * tc + tr);
+      float grad = length(vec2(gx, gy));
+
+      // Anime4K ThinLines push: pull soft line skirts gently toward brighter interior along gradient
+      vec2 dir = (grad > 0.015) ? (vec2(gx, gy) / grad) : vec2(0.0);
+      float pushAmt = clamp(grad * 0.42, 0.0, 0.48);
+      vec3 pushed = texture(uTex, vUv + dir * px * pushAmt).rgb;
+
+      // Anti-ringing clamp to preserve clean cel colors without artifacts
+      vec3 minC = min(mcRgb, min(
+        min(texture(uTex, vUv + vec2(0.0, -px.y)).rgb, texture(uTex, vUv + vec2(0.0, px.y)).rgb),
+        min(texture(uTex, vUv + vec2(-px.x, 0.0)).rgb, texture(uTex, vUv + vec2(px.x, 0.0)).rgb)
+      ));
+      vec3 maxC = max(mcRgb, max(
+        max(texture(uTex, vUv + vec2(0.0, -px.y)).rgb, texture(uTex, vUv + vec2(0.0, px.y)).rgb),
+        max(texture(uTex, vUv + vec2(-px.x, 0.0)).rgb, texture(uTex, vUv + vec2(px.x, 0.0)).rgb)
+      ));
+
+      // Blend line-thinned sample only on real line edges; keep flat cel areas silky clean
+      vec3 base = mix(mcRgb, pushed, smoothstep(0.04, 0.25, grad) * 0.55);
+
+      // Pure luma micro-sharpen (zero color/saturation distortion)
+      float lb = luma(base);
+      float avgL = 0.25 * (tc + bc + ml + mr);
+      float highPass = lb - avgL;
+      // Darken true ink lines slightly while sharpening edges cleanly
+      float deltaL = clamp(highPass * 0.65, -0.16, 0.16);
+      vec3 outRgb = clamp(base + vec3(deltaL), minC * 0.92, maxC * 1.02);
+      outColor = vec4(clamp(outRgb, 0.0, 1.0), 1.0);
+    }`;
+
+  function compileShader(type, src) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      console.warn("GPU shader compile error:", gl.getShaderInfoLog(sh));
+      gl.deleteShader(sh);
+      return null;
+    }
+    return sh;
+  }
+
+  function linkProgram(fragSrc) {
+    const vs = compileShader(gl.VERTEX_SHADER, VERT_SRC);
+    const fs = compileShader(gl.FRAGMENT_SHADER, fragSrc);
+    if (!vs || !fs) return null;
+    const p = gl.createProgram();
+    gl.attachShader(p, vs);
+    gl.attachShader(p, fs);
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+      console.warn("GPU program link error:", gl.getProgramInfoLog(p));
+      return null;
+    }
+    return p;
+  }
+
+  function init() {
+    if (gl) return true;
+    canvas = document.getElementById("noirGpuCanvas");
+    video = document.getElementById("noirVideo");
+    if (!canvas || !video) return false;
+    gl = canvas.getContext("webgl2", {
+      powerPreference: "high-performance",
+      alpha: false,
+      antialias: false,
+      depth: false,
+      stencil: false,
+      preserveDrawingBuffer: false,
+    });
+    if (!gl) return false;
+
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    if (dbg) {
+      const raw = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || "";
+      const m = raw.match(/(RTX\s*\d+\s*(?:Ti|SUPER)?|GTX\s*\d+\s*(?:Ti|SUPER)?|RX\s*\d+\s*(?:XT|XTX)?|Arc\s*[A-Z]\d+|Radeon[^\-,)]+|GeForce[^\-,)]+)/i);
+      gpuShortName = m ? m[1].trim() : "GPU";
+    }
+
+    progFsr = linkProgram(FRAG_FSR_RCAS);
+    progAnime = linkProgram(FRAG_ANIME4K);
+    if (!progFsr || !progAnime) { gl = null; return false; }
+
+    tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    return true;
+  }
+
+  function renderFrame() {
+    if (!active || mode === 0 || !gl || !video || !canvas) return;
+    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+      const stage = document.getElementById("playerStage");
+      const rect = stage.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cw = Math.min(3840, Math.max(640, Math.round(rect.width * dpr)));
+      const ch = Math.min(2160, Math.max(360, Math.round(rect.height * dpr)));
+      if (canvas.width !== cw || canvas.height !== ch) {
+        canvas.width = cw;
+        canvas.height = ch;
+      }
+
+      // Compute exact aspect-preserving letterbox/pillarbox viewport on GPU
+      const vidAspect = video.videoWidth / video.videoHeight;
+      const canAspect = cw / ch;
+      let vx = 0, vy = 0, vw = cw, vh = ch;
+      if (vidAspect > canAspect) {
+        vh = Math.round(cw / vidAspect);
+        vy = Math.floor((ch - vh) / 2);
+      } else {
+        vw = Math.round(ch * vidAspect);
+        vx = Math.floor((cw - vw) / 2);
+      }
+
+      try {
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+      } catch (err) {
+        // Cross-origin untainted stream fallback: return cleanly to native <video>
+        setMode(0);
+        return;
+      }
+
+      gl.viewport(0, 0, cw, ch);
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.viewport(vx, vy, vw, vh);
+
+      const prog = mode === 1 ? progFsr : progAnime;
+      gl.useProgram(prog);
+      gl.uniform1i(gl.getUniformLocation(prog, "uTex"), 0);
+      gl.uniform2f(gl.getUniformLocation(prog, "uSrcSize"), video.videoWidth, video.videoHeight);
+      gl.uniform2f(gl.getUniformLocation(prog, "uDstSize"), vw, vh);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    scheduleNext();
+  }
+
+  function scheduleNext() {
+    if (!active || mode === 0) return;
+    if (video && typeof video.requestVideoFrameCallback === "function") {
+      vfcId = video.requestVideoFrameCallback(renderFrame);
+    } else {
+      rafId = requestAnimationFrame(renderFrame);
+    }
+  }
+
+  function stopLoop() {
+    active = false;
+    if (vfcId !== null && video && typeof video.cancelVideoFrameCallback === "function") {
+      try { video.cancelVideoFrameCallback(vfcId); } catch (e) {}
+      vfcId = null;
+    }
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    const v = document.getElementById("noirVideo");
+    const c = document.getElementById("noirGpuCanvas");
+    const btn = document.getElementById("btnGpuEnhance");
+    const lbl = document.getElementById("gpuEnhanceLabel");
+    if (mode === 0) {
+      stopLoop();
+      if (c) c.style.display = "none";
+      if (v) v.classList.remove("gpu-piped");
+      if (btn) btn.classList.remove("gpu-on");
+      if (lbl) lbl.textContent = "Upscale";
+      if (btn) btn.title = "GPU Upscaler: OFF (press G to cycle)";
+      return;
+    }
+    if (!init()) {
+      mode = 0;
+      if (lbl) lbl.textContent = "Upscale";
+      return;
+    }
+    c.style.display = "block";
+    v.classList.add("gpu-piped");
+    if (btn) btn.classList.add("gpu-on");
+    if (lbl) lbl.textContent = mode === 1 ? "FSR" : "Anime4K";
+    if (btn) btn.title = mode === 1
+      ? `GPU Upscaler: FSR+RCAS on ${gpuShortName}`
+      : `GPU Upscaler: Anime4K Restore on ${gpuShortName}`;
+    if (!active) {
+      active = true;
+      renderFrame();
+    } else {
+      renderFrame();
+    }
+  }
+
+  function onResize() {
+    if (active && mode > 0) renderFrame();
+  }
+
+  return {
+    setMode,
+    getMode: () => mode,
+    onResize,
+    stop: () => { stopLoop(); const c = document.getElementById("noirGpuCanvas"); const v = document.getElementById("noirVideo"); if (c) c.style.display = "none"; if (v) v.classList.remove("gpu-piped"); },
+    resumeIfEnabled: () => { if (mode > 0) setMode(mode); },
+  };
+})();
+
+window.addEventListener("resize", () => NoirGpuUpscaler.onResize());
+
+/* =====================================================================
+   UNIFIED FULLSCREEN PLAYER (MINIMALIST HUD + TRUE FULLSCREEN + GPU)
+   ===================================================================== */
+let isTrueFullscreen = false;
+let clickPlayTimer = null;
+
+function formatTime(sec) {
+  if (!isFinite(sec) || sec < 0) return "00:00";
+  const s = Math.floor(sec % 60);
+  const m = Math.floor((sec / 60) % 60);
+  const h = Math.floor(sec / 3600);
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function parseRuntimeSeconds(meta, item) {
+  const raw = (meta && meta.runtime) || "";
+  if (raw) {
+    const hm = raw.match(/(\d+)\s*h/i);
+    const mm = raw.match(/(\d+)\s*m/i);
+    if (hm || mm) {
+      const total = (hm ? parseInt(hm[1], 10) * 3600 : 0) + (mm ? parseInt(mm[1], 10) * 60 : 0);
+      if (total > 60) return total;
+    }
+    const plain = raw.match(/(\d+)/);
+    if (plain) {
+      const mins = parseInt(plain[1], 10);
+      if (mins >= 5 && mins <= 400) return mins * 60;
+    }
+  }
+  return 0;
+}
+
+function getEffectiveVodDuration() {
+  const v = document.getElementById("noirVideo");
+  if (activeVodIsFfmpeg) {
+    if (activeVodDuration > 30) return activeVodDuration;
+    if (isFinite(v.duration) && v.duration > 30) return v.duration + vodSeekOffset;
+    return activeVodDuration;
+  }
+  if (isFinite(v.duration) && v.duration > 0) return v.duration;
+  return activeVodDuration;
+}
+
+function getEffectiveVodCurrentTime() {
+  const v = document.getElementById("noirVideo");
+  return (activeVodIsFfmpeg ? vodSeekOffset : 0) + (v.currentTime || 0);
+}
+
+function updateVodScrubUi() {
+  if (playerMode !== "vod") return;
+  const cur = getEffectiveVodCurrentTime();
+  const dur = getEffectiveVodDuration();
+  document.getElementById("playerCurTime").textContent = formatTime(cur);
+  if (isFinite(dur) && dur > 0) {
+    document.getElementById("playerDurTime").textContent = formatTime(dur);
+    document.getElementById("playerScrubFill").style.width = `${Math.min(100, Math.max(0, (cur / dur) * 100))}%`;
+  } else {
+    document.getElementById("playerDurTime").textContent = "--:--";
+    document.getElementById("playerScrubFill").style.width = "0%";
+  }
+}
+
+function seekVodTo(targetSec) {
+  const v = document.getElementById("noirVideo");
+  const dur = getEffectiveVodDuration();
+  let clamped = Math.max(0, targetSec);
+  if (dur > 5) clamped = Math.min(dur - 2, clamped);
+
+  if (!activeVodIsFfmpeg) {
+    if (isFinite(v.duration) && v.duration > 0) {
+      v.currentTime = clamped;
+      updateVodScrubUi();
+    }
+    return;
+  }
+
+  // If target is already inside the currently buffered FFmpeg fragment window, seek instantaneously!
+  const localTarget = clamped - vodSeekOffset;
+  if (localTarget >= 0 && isFinite(v.duration) && localTarget <= Math.max(0, v.duration - 1.5)) {
+    v.currentTime = localTarget;
+    updateVodScrubUi();
+    return;
+  }
+
+  // Otherwise seek FFmpeg cleanly to the exact second anywhere in the full movie/episode!
+  if (!activeRawEngineUrl) return;
+  const jumpSec = Math.floor(clamped);
+  vodSeekOffset = jumpSec;
+  showPlayerBuffer(`Seeking to ${formatTime(jumpSec)}...`);
+  const aidxArg = activeAudioIdx >= 0 ? String(activeAudioIdx) : "auto";
+  const nextUrl = `/pc/ffmpeg?mode=vod&slot=vod&aidx=${aidxArg}&lang=eng&ss=${jumpSec}&url=${encodeURIComponent(activeRawEngineUrl)}&_t=${Date.now()}`;
+  v.pause();
+  v.src = nextUrl;
+  v.load();
+  v.play().catch(() => {});
+  updateVodScrubUi();
+}
+
+function seekFromScrub(e) {
+  const dur = getEffectiveVodDuration();
+  if (!isFinite(dur) || dur <= 0) return;
+  const rect = document.getElementById("playerScrubTrack").getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  seekVodTo(pct * dur);
+}
+
+function seekDelta(sec) {
+  seekVodTo(getEffectiveVodCurrentTime() + sec);
+}
+
+const SVG_PLAY = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>`;
+const SVG_PAUSE = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`;
+const SVG_VOL_HIGH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+const SVG_VOL_LOW = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+const SVG_VOL_MUTE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+const SVG_FS_ENTER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>`;
+const SVG_FS_EXIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>`;
+
+function syncVolumeIcon() {
+  const v = document.getElementById("noirVideo");
+  const btn = document.getElementById("btnHudMute");
+  if (!btn) return;
+  if (v.muted || v.volume === 0) btn.innerHTML = SVG_VOL_MUTE;
+  else if (v.volume < 0.5) btn.innerHTML = SVG_VOL_LOW;
+  else btn.innerHTML = SVG_VOL_HIGH;
+}
+
+function setPlayerVolume(val) {
+  const v = document.getElementById("noirVideo");
+  const num = parseFloat(val);
+  v.volume = isNaN(num) ? 1 : Math.max(0, Math.min(1, num));
+  v.muted = v.volume === 0;
+  syncVolumeIcon();
+}
+
+function toggleMute() {
+  const v = document.getElementById("noirVideo");
+  v.muted = !v.muted;
+  syncVolumeIcon();
+}
+
+function handleStageClick(e) {
+  const d = document.getElementById("playerDrawer");
+  if (d.classList.contains("open")) {
+    d.classList.remove("open");
+    return;
+  }
+  wakeHud();
+  if (clickPlayTimer) clearTimeout(clickPlayTimer);
+  clickPlayTimer = setTimeout(() => {
+    clickPlayTimer = null;
+    toggleVideoPlay();
+  }, 200);
+}
+
+function handleStageDblClick(e) {
+  if (clickPlayTimer) { clearTimeout(clickPlayTimer); clickPlayTimer = null; }
+  toggleFullscreen();
+}
+
+/* =====================================================================
+   STREMIO-STYLE 4K ARTWORK & FILLING TITLE-LOGO LOADER CONTROLLER
+   ===================================================================== */
+const StremioLoader = (() => {
+  let pct = 0;
+  let active = false;
+  let tickTimer = null;
+  let fadeTimer = null;
+
+  function applyPct(val) {
+    pct = Math.max(pct, Math.min(100, val));
+    const el = document.getElementById("stremioLoader");
+    // Map 0..100% fill cleanly onto bottom-to-top liquid wave mask-position-y (0% = empty grayed out, 100% = full glass)
+    if (el) el.style.setProperty("--liquid-y", pct.toFixed(1) + "%");
+  }
+
+  function open({ backdrop, logo, title, subtitle, liveEmblem, status }) {
+    clearInterval(tickTimer);
+    clearTimeout(fadeTimer);
+    active = true;
+    pct = 0;
+
+    const el = document.getElementById("stremioLoader");
+    const bg = document.getElementById("stremioBackdrop");
+    const emblem = document.getElementById("stremioLiveEmblem");
+    const logoDim = document.getElementById("stremioLogoDim");
+    const logoFill = document.getElementById("stremioLogoFill");
+    const wordDim = document.getElementById("stremioWordDim");
+    const wordFill = document.getElementById("stremioWordFill");
+    const epLine = document.getElementById("stremioEpLine");
+    const stTxt = document.getElementById("stremioStatusText");
+
+    if (backdrop) {
+      bg.src = backdrop;
+      bg.style.display = "block";
+    } else {
+      bg.removeAttribute("src");
+      bg.style.display = "none";
+    }
+
+    if (liveEmblem) {
+      emblem.src = liveEmblem;
+      emblem.style.display = "block";
+    } else {
+      emblem.removeAttribute("src");
+      emblem.style.display = "none";
+    }
+
+    const cleanTitle = (title || "NOCTURNE").split(" (")[0].trim();
+    wordDim.textContent = cleanTitle;
+    wordFill.textContent = cleanTitle;
+    wordDim.style.display = "block";
+    wordFill.style.display = "block";
+    logoDim.style.display = "none";
+    logoFill.style.display = "none";
+
+    if (logo) {
+      logoDim.onload = () => {
+        if (!active) return;
+        logoDim.style.display = "block";
+        logoFill.style.display = "block";
+        wordDim.style.display = "none";
+        wordFill.style.display = "none";
+      };
+      logoDim.onerror = () => {
+        logoDim.style.display = "none";
+        logoFill.style.display = "none";
+        wordDim.style.display = "block";
+        wordFill.style.display = "block";
+      };
+      logoDim.src = logo;
+      logoFill.src = logo;
+    } else {
+      logoDim.removeAttribute("src");
+      logoFill.removeAttribute("src");
+    }
+
+    epLine.textContent = subtitle || "";
+    epLine.style.display = subtitle ? "block" : "none";
+    stTxt.textContent = status || "Connecting...";
+
+    el.style.setProperty("--liquid-y", "0%");
+    el.classList.add("active");
+    setTimeout(() => { if (active) applyPct(14); }, 140);
+
+    // Smooth organic fill-up while waiting for initial torrent/HLS buffer
+    tickTimer = setInterval(() => {
+      if (!active) return;
+      if (pct < 86) {
+        const step = pct < 35 ? 3.4 : (pct < 65 ? 2.1 : 0.9);
+        applyPct(Math.min(86, pct + step));
+      }
+    }, 380);
+  }
+
+  function update(targetPct, statusText) {
+    if (!active) return;
+    if (typeof targetPct === "number") applyPct(targetPct);
+    if (statusText) {
+      document.getElementById("stremioStatusText").textContent = statusText;
+    }
+  }
+
+  function complete() {
+    if (!active) return;
+    clearInterval(tickTimer);
+    applyPct(100);
+    document.getElementById("stremioStatusText").textContent = "Ready · 100%";
+    fadeTimer = setTimeout(() => {
+      active = false;
+      const el = document.getElementById("stremioLoader");
+      if (el) el.classList.remove("active");
+    }, 220);
+  }
+
+  function hideImmediate() {
+    clearInterval(tickTimer);
+    clearTimeout(fadeTimer);
+    active = false;
+    pct = 0;
+    const el = document.getElementById("stremioLoader");
+    if (el) el.classList.remove("active");
+  }
+
+  return { open, update, complete, hideImmediate, isActive: () => active };
+})();
+
+let hasStartedPlayback = false;
+
+function cleanupPlayerMedia() {
+  if (blackScreenWatchdog) { clearTimeout(blackScreenWatchdog); blackScreenWatchdog = null; }
+  if (statsTimer) { clearInterval(statsTimer); statsTimer = null; }
+  if (activeHls) { try { activeHls.destroy(); } catch (e) {} activeHls = null; }
+  hasStartedPlayback = false;
+  StremioLoader.hideImmediate();
+  hidePlayerBuffer();
+  NoirGpuUpscaler.stop();
+  const v = document.getElementById("noirVideo");
+  v.pause();
+  v.removeAttribute("src");
+  v.removeAttribute("crossorigin");
+  v.querySelectorAll("track").forEach(t => t.remove());
+  v.load();
+  document.getElementById("playerDrawer").classList.remove("open");
+}
+
+let activeRawEngineUrl = "";
+let activeAudioTracks = [];
+let activeAudioIdx = 0;
+let vodSeekOffset = 0;
+let activeVodDuration = 0;
+let activeVodIsFfmpeg = false;
+
+async function fetchActiveAudioTracks() {
+  if (!activeRawEngineUrl) return [];
+  try {
+    const res = await fetch(`/pc/audiotracks?pref=eng&url=${encodeURIComponent(activeRawEngineUrl)}`);
+    if (!res.ok) return [];
+    const d = await res.json();
+    activeAudioTracks = d.tracks || [];
+    if (typeof d.defaultIdx === "number" && activeAudioTracks.length > 0 && activeAudioIdx === -1) {
+      activeAudioIdx = d.defaultIdx;
+    }
+    if (typeof d.durationSec === "number" && d.durationSec > 30) {
+      activeVodDuration = d.durationSec;
+      updateVodScrubUi();
+    }
+    return activeAudioTracks;
+  } catch (e) { return []; }
+}
+
+function switchAudioTrack(trackIdx) {
+  if (!activeRawEngineUrl) return;
+  activeAudioIdx = trackIdx;
+  activeVodIsFfmpeg = true;
+  const v = document.getElementById("noirVideo");
+  const currentSec = Math.max(0, Math.floor(getEffectiveVodCurrentTime()));
+  vodSeekOffset = currentSec;
+  showPlayerBuffer("Switching audio track...");
+  document.getElementById("playerDrawer").classList.remove("open");
+
+  const nextUrl = `/pc/ffmpeg?mode=vod&slot=vod&aidx=${trackIdx}&ss=${currentSec}&url=${encodeURIComponent(activeRawEngineUrl)}&_t=${Date.now()}`;
+  v.pause();
+  v.src = nextUrl;
+  v.load();
+  v.play().catch(() => {});
+}
+
+async function startVodPlayback(streams, idx) {
+  playerMode = "vod";
+  activeVodStreams = streams;
+  activeVodIdx = idx;
+  activeRawEngineUrl = "";
+  activeAudioTracks = [];
+  activeAudioIdx = -1;
+  vodSeekOffset = 0;
+  activeVodIsFfmpeg = false;
+  activeVodDuration = parseRuntimeSeconds(detailMeta, detailItem);
+  const stream = streams[idx];
+  if (!stream) return;
+
+  cleanupPlayerMedia();
+  document.getElementById("playerOverlay").classList.add("open");
+  document.getElementById("playerScrubWrap").classList.add("visible");
+  document.getElementById("btnHudSeekBack").style.display = "inline-flex";
+  document.getElementById("btnHudSeekFwd").style.display = "inline-flex";
+  document.getElementById("btnHudZapPrev").style.display = "none";
+  document.getElementById("btnHudZapNext").style.display = "none";
+  document.getElementById("btnHudAudio").style.display = "inline-flex";
+  document.getElementById("btnHudSubs").style.display = "inline-flex";
+  document.getElementById("btnHudSkipIntro").style.display = (detailItem && detailItem.type !== "movie") ? "inline-flex" : "none";
+
+  const titleLabel = detailItem
+    ? (detailItem.type === "movie" ? detailItem.name : `${detailItem.name} • S${String(detailSeason).padStart(2,"0")} E${String(detailEpisode).padStart(2,"0")}`)
+    : stream.releaseTitle;
+  document.getElementById("playerTitle").textContent = titleLabel;
+  document.getElementById("playerBadge").textContent = `${stream.quality} · Connecting...`;
+
+  // Launch Stremio-style 4K full-bleed artwork + liquid glass-fill title logo loader!
+  const bgArt = (detailMeta && detailMeta.background) || (detailItem && (detailItem.backdrop || detailItem.poster)) || "";
+  const titleLogo = (detailMeta && detailMeta.logo) || (detailItem && detailItem.logo) || "";
+  const epSub = (detailItem && detailItem.type !== "movie")
+    ? `SEASON ${detailSeason} · EPISODE ${detailEpisode}`
+    : (detailItem && detailItem.year ? `${detailItem.year} · ${stream.quality}` : stream.quality);
+  StremioLoader.open({
+    backdrop: bgArt,
+    logo: titleLogo,
+    title: (detailItem && detailItem.name) || stream.releaseTitle || "NOCTURNE",
+    subtitle: epSub,
+    status: `${stream.quality} · ${stream.isDirect ? "Direct Stream" : `Locking ${stream.seeders} peers...`}`,
+  });
+
+  // Save to Continue Watching
+  if (detailItem) {
+    const cw = Object.assign({}, detailItem, { season: detailSeason, episode: detailEpisode, position: 10, duration: 100 });
+    appState.continueWatching = [cw, ...(appState.continueWatching || []).filter(x => x.id !== detailItem.id)].slice(0, 15);
+    persistState();
+    renderContinueWatching();
+  }
+
+  // Load OpenSubtitles in background
+  activeSubtitles = [];
+  if (detailItem) {
+    fetch(`/pc/subtitles?type=${encodeURIComponent(detailItem.type || "movie")}&id=${encodeURIComponent(detailItem.id)}&season=${detailSeason}&episode=${detailEpisode}`)
+      .then(r => r.json())
+      .then(d => { activeSubtitles = d.subtitles || []; })
+      .catch(() => {});
+  }
+
+  let playSrc = "";
+  activeTorrentHash = "";
+  if (stream.url) {
+    playSrc = stream.url;
+    activeRawEngineUrl = stream.url;
+    StremioLoader.update(45, `Direct HTTPS · ${stream.quality} · Buffering...`);
+  } else if (stream.infoHash) {
+    activeTorrentHash = stream.infoHash;
+    await engineFetch(`/claim?session=${encodeURIComponent(playbackSession)}`, { method: "POST" }).catch(() => {});
+    const idxParam = (stream.fileIdx !== undefined && stream.fileIdx !== null) ? stream.fileIdx : (detailItem && detailItem.type !== "movie" ? `episode:${detailSeason}:${detailEpisode}` : "");
+    let rawEngineUrl = `${location.origin}/stream?hash=${stream.infoHash}&idx=${encodeURIComponent(idxParam)}&token=${encodeURIComponent(ENGINE_TOKEN)}&session=${encodeURIComponent(playbackSession)}`;
+    (stream.sources || []).slice(0, 12).forEach(src => {
+      const c = src.replace(/^tracker:/, "").trim();
+      if (c.startsWith("udp://") || c.startsWith("http://") || c.startsWith("https://")) {
+        rawEngineUrl += "&tr=" + encodeURIComponent(c);
+      }
+    });
+    activeRawEngineUrl = rawEngineUrl;
+
+    // Route MKV / non-MP4 torrents through Zero-CPU FFmpeg Video-Copy + Auto-English AAC Remux!
+    const lowRel = (stream.releaseTitle || "").toLowerCase();
+    const needsRemux = lowRel.includes(".mkv") || lowRel.includes("eac3") || lowRel.includes("ddp") || lowRel.includes("atmos") || lowRel.includes("dts") || lowRel.includes("ac3") || lowRel.includes("multi") || lowRel.includes("dual") || !lowRel.includes(".mp4");
+    activeVodIsFfmpeg = needsRemux;
+    playSrc = needsRemux
+      ? `/pc/ffmpeg?mode=vod&slot=vod&aidx=auto&lang=eng&url=${encodeURIComponent(rawEngineUrl)}`
+      : rawEngineUrl;
+
+    // Probe embedded audio tracks + exact container duration immediately and retry once if header was warming
+    setTimeout(() => { fetchActiveAudioTracks(); }, 900);
+    setTimeout(() => { if (activeVodDuration <= 0 || activeAudioTracks.length === 0) fetchActiveAudioTracks(); }, 3500);
+    statsTimer = setInterval(pollTorrentStats, 700);
+  }
+
+  const v = document.getElementById("noirVideo");
+  v.src = playSrc;
+  updateVodScrubUi();
+  v.ontimeupdate = updateVodScrubUi;
+  v.oncanplay = () => { StremioLoader.update(94, `${stream.quality} · Starting playback...`); };
+  v.onplaying = () => {
+    hasStartedPlayback = true;
+    StremioLoader.complete();
+    hidePlayerBuffer();
+    updatePlayPauseLabel();
+    NoirGpuUpscaler.resumeIfEnabled();
+  };
+  v.onwaiting = () => {
+    if (hasStartedPlayback) showPlayerBuffer("Buffering stream...");
+  };
+  v.onerror = () => {
+    if (activeVodIdx + 1 < activeVodStreams.length) {
+      startVodPlayback(activeVodStreams, activeVodIdx + 1);
+    } else {
+      StremioLoader.update(15, "Source failed — open Sources to pick another stream.");
+    }
+  };
+  v.play().catch(() => {});
+  wakeHud();
+}
+
+async function pollTorrentStats() {
+  if (!activeTorrentHash) return;
+  try {
+    const res = await engineFetch(`/stats?hash=${activeTorrentHash}`);
+    if (!res.ok) return;
+    const d = await res.json();
+    const speedMb = ((d.download_speed || 0) / (1024 * 1024)).toFixed(1);
+    const cacheMb = ((d.cache_bytes || 0) / (1024 * 1024)).toFixed(0);
+    const peers = d.active_peers || d.total_peers || 0;
+    const st = activeVodStreams[activeVodIdx];
+    const line = `${st ? st.quality : "HD"} · ${speedMb} MB/s · ${peers} peers`;
+    document.getElementById("playerBadge").textContent = line;
+
+    // Drive Stremio logo fill percentage directly from real torrent bootstrap progress!
+    if (StremioLoader.isActive()) {
+      let fillTarget = 18;
+      if (d.info_ready) fillTarget = Math.max(fillTarget, 42);
+      if (peers > 0) fillTarget = Math.max(fillTarget, 56 + Math.min(18, peers));
+      const mbReady = (d.bytes_completed || 0) / (1024 * 1024);
+      if (mbReady > 0.5) fillTarget = Math.max(fillTarget, 62 + Math.min(31, mbReady * 3.8));
+      StremioLoader.update(fillTarget, `${line}`);
+    }
+  } catch (e) {}
+}
+
+function startLivePlayback(chIdx, feedIdx = 0, forceFfmpeg = false) {
+  playerMode = "live";
+  activeLiveIdx = chIdx;
+  const ch = liveChannels[chIdx];
+  if (!ch) return;
+  const feeds = (ch.backups && ch.backups.length) ? ch.backups : [{ url: ch.url, source: ch.source, quality: ch.quality, protocol: ch.protocol || "HLS" }];
+  activeLiveFeedIdx = feedIdx % feeds.length;
+  const feed = feeds[activeLiveFeedIdx];
+
+  cleanupPlayerMedia();
+  document.getElementById("playerOverlay").classList.add("open");
+  document.getElementById("playerScrubWrap").classList.remove("visible");
+  document.getElementById("btnHudSeekBack").style.display = "none";
+  document.getElementById("btnHudSeekFwd").style.display = "none";
+  document.getElementById("btnHudZapPrev").style.display = "inline-flex";
+  document.getElementById("btnHudZapNext").style.display = "inline-flex";
+  document.getElementById("btnHudAudio").style.display = "none";
+  document.getElementById("btnHudSubs").style.display = "none";
+  document.getElementById("btnHudSkipIntro").style.display = "none";
+
+  document.getElementById("playerTitle").textContent = ch.name;
+  const lowUrl = (feed.url || "").toLowerCase();
+  const useFfmpeg = forceFfmpeg || feed.protocol === "FFMPEG" || lowUrl.includes("/play/") || lowUrl.includes(":8000") || lowUrl.includes(":8201") || lowUrl.includes(":3342") || lowUrl.endsWith(".ts");
+
+  document.getElementById("playerBadge").textContent = `Live · ${feed.source}`;
+  StremioLoader.open({
+    backdrop: "",
+    logo: "",
+    liveEmblem: ch.logo || "",
+    title: ch.name,
+    subtitle: `LIVE BROADCAST · ${feed.source}`,
+    status: `Locking ${feed.quality || "HD"} signal (${useFfmpeg ? "FFmpeg bwdif" : "Direct HLS"})...`,
+  });
+
+  const v = document.getElementById("noirVideo");
+  v.ontimeupdate = null;
+  v.oncanplay = () => StremioLoader.update(92, `Signal locked · Starting broadcast...`);
+  v.onplaying = () => {
+    hasStartedPlayback = true;
+    StremioLoader.complete();
+    hidePlayerBuffer();
+    updatePlayPauseLabel();
+    NoirGpuUpscaler.resumeIfEnabled();
+    const resStr = v.videoHeight ? `${v.videoWidth}×${v.videoHeight}` : feed.quality;
+    document.getElementById("playerBadge").textContent = `Live · ${resStr} · ${feed.source}`;
+  };
+  v.onwaiting = () => {
+    if (hasStartedPlayback) showPlayerBuffer("Syncing live broadcast...");
+  };
+
+  if (useFfmpeg) {
+    v.src = `/pc/ffmpeg?mode=live&slot=live0&url=${encodeURIComponent(feed.url)}&_t=${Date.now()}`;
+    v.onerror = () => {
+      if (activeLiveFeedIdx + 1 < feeds.length) startLivePlayback(chIdx, activeLiveFeedIdx + 1, false);
+    };
+    v.play().catch(() => {});
+  } else if (window.Hls && Hls.isSupported()) {
+    const hls = new Hls({
+      enableWorker: true,
+      maxBufferLength: WIFI_PROFILE === "balanced" ? 45 : 25,
+      maxMaxBufferLength: 90,
+      manifestLoadingTimeOut: 12000,
+    });
+    hls.loadSource(`/live/proxy?url=${encodeURIComponent(feed.url)}`);
+    hls.attachMedia(v);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      StremioLoader.update(64, `Playlist locked · Decoding live stream...`);
+      v.play().catch(() => {});
+      blackScreenWatchdog = setTimeout(() => {
+        if (v.videoWidth === 0) startLivePlayback(chIdx, activeLiveFeedIdx, true);
+      }, 4500);
+    });
+    hls.on(Hls.Events.ERROR, (ev, data) => {
+      if (data.fatal) startLivePlayback(chIdx, activeLiveFeedIdx, true);
+    });
+    activeHls = hls;
+  }
+  wakeHud();
+}
+
+function zapLive(delta) {
+  if (!liveChannels.length) return;
+  const next = (activeLiveIdx + delta + liveChannels.length) % liveChannels.length;
+  bindLiveHero(liveChannels[next]);
+  startLivePlayback(next, 0, false);
+}
+
+async function setTrueFullscreen(enable) {
+  isTrueFullscreen = !!enable;
+  const btn = document.getElementById("btnHudFullscreen");
+  if (btn) {
+    btn.innerHTML = isTrueFullscreen ? SVG_FS_EXIT : SVG_FS_ENTER;
+    btn.title = isTrueFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)";
+  }
+
+  if (typeof window.noirSetNativeFullscreen === "function") {
+    try {
+      await window.noirSetNativeFullscreen(isTrueFullscreen);
+    } catch (e) {}
+  } else {
+    try {
+      if (isTrueFullscreen && !document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else if (!isTrueFullscreen && document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch (e) {}
+  }
+  setTimeout(() => NoirGpuUpscaler.onResize(), 80);
+}
+
+function toggleFullscreen() {
+  setTrueFullscreen(!isTrueFullscreen);
+}
+
+function closePlayer() {
+  if (isTrueFullscreen) setTrueFullscreen(false);
+  cleanupPlayerMedia();
+  if (activeTorrentHash) {
+    engineFetch(`/release?session=${encodeURIComponent(playbackSession)}`, { method: "POST" }).catch(() => {});
+    activeTorrentHash = "";
+  }
+  document.getElementById("playerOverlay").classList.remove("open");
+}
+
+function toggleVideoPlay() {
+  const v = document.getElementById("noirVideo");
+  if (v.paused) v.play().catch(() => {}); else v.pause();
+  updatePlayPauseLabel();
+}
+function updatePlayPauseLabel() {
+  const v = document.getElementById("noirVideo");
+  const btn = document.getElementById("btnHudPlayPause");
+  if (btn) btn.innerHTML = v.paused ? SVG_PLAY : SVG_PAUSE;
+}
+function skipIntro() {
+  seekDelta(85);
+}
+function cycleGpuEnhance() {
+  gpuEnhanceLevel = (gpuEnhanceLevel + 1) % 3;
+  NoirGpuUpscaler.setMode(gpuEnhanceLevel);
+}
+
+function toggleDrawer(kind) {
+  const d = document.getElementById("playerDrawer");
+  if (d.classList.contains("open") && d.dataset.kind === kind) {
+    d.classList.remove("open");
+    return;
+  }
+  d.dataset.kind = kind;
+  d.innerHTML = "";
+  if (kind === "sources") {
+    if (playerMode === "live") {
+      const ch = liveChannels[activeLiveIdx];
+      const feeds = (ch && ch.backups && ch.backups.length) ? ch.backups : [ch];
+      d.innerHTML = `<div style="font-weight:800; margin-bottom:8px;">Switch Broadcast Feed</div>`;
+      feeds.forEach((f, idx) => {
+        const el = document.createElement("div");
+        el.className = "drawer-item" + (idx === activeLiveFeedIdx ? " active" : "");
+        el.textContent = `Feed ${idx + 1}: ${f.source} (${f.quality})`;
+        el.onclick = () => startLivePlayback(activeLiveIdx, idx, false);
+        d.appendChild(el);
+      });
+      const forceEl = document.createElement("div");
+      forceEl.className = "drawer-item";
+      forceEl.textContent = "⚡ Force FFmpeg bwdif H.264 Decoder";
+      forceEl.onclick = () => startLivePlayback(activeLiveIdx, activeLiveFeedIdx, true);
+      d.appendChild(forceEl);
+    } else {
+      d.innerHTML = `<div style="font-weight:800; margin-bottom:8px;">Switch Movie/Series Source</div>`;
+      activeVodStreams.slice(0, 14).forEach((s, idx) => {
+        const el = document.createElement("div");
+        el.className = "drawer-item" + (idx === activeVodIdx ? " active" : "");
+        el.textContent = `[${s.quality} · ${s.sizeText || "Direct"}] ${(s.releaseTitle || "").slice(0, 36)}`;
+        el.onclick = () => startVodPlayback(activeVodStreams, idx);
+        d.appendChild(el);
+      });
+    }
+  } else if (kind === "audio") {
+    d.innerHTML = `<div style="font-weight:700; font-size:13px; color:#fff; padding:4px 8px 8px;">Audio Language</div>`;
+    const renderTracks = (tracks) => {
+      d.innerHTML = `<div style="font-weight:700; font-size:13px; color:#fff; padding:4px 8px 8px;">Audio Language</div>`;
+      if (!tracks || !tracks.length) {
+        const empty = document.createElement("div");
+        empty.className = "drawer-item";
+        empty.textContent = "Default Audio Track (Single Track)";
+        d.appendChild(empty);
+        return;
+      }
+      tracks.forEach((tr) => {
+        const el = document.createElement("div");
+        el.className = "drawer-item" + (tr.audioIdx === activeAudioIdx ? " active" : "");
+        const desc = [tr.langLabel, tr.codec, tr.title].filter(Boolean).join(" · ");
+        el.textContent = `Track ${tr.audioIdx + 1}: ${desc}`;
+        el.onclick = () => switchAudioTrack(tr.audioIdx);
+        d.appendChild(el);
+      });
+    };
+    if (activeAudioTracks.length > 0) {
+      renderTracks(activeAudioTracks);
+    } else {
+      const loading = document.createElement("div");
+      loading.className = "drawer-item";
+      loading.textContent = "Detecting embedded audio tracks...";
+      d.appendChild(loading);
+      fetchActiveAudioTracks().then(renderTracks);
+    }
+  } else if (kind === "subs") {
+    d.innerHTML = `<div style="font-weight:800; margin-bottom:8px;">OpenSubtitles (Arabic / English)</div>`;
+    const off = document.createElement("div");
+    off.className = "drawer-item";
+    off.textContent = "Subtitles Off";
+    off.onclick = () => {
+      const v = document.getElementById("noirVideo");
+      v.querySelectorAll("track").forEach(t => t.remove());
+      d.classList.remove("open");
+    };
+    d.appendChild(off);
+    activeSubtitles.forEach(s => {
+      const el = document.createElement("div");
+      el.className = "drawer-item";
+      el.textContent = `${s.langLabel}`;
+      el.onclick = () => {
+        const v = document.getElementById("noirVideo");
+        v.querySelectorAll("track").forEach(t => t.remove());
+        const tr = document.createElement("track");
+        tr.kind = "subtitles";
+        tr.label = s.langLabel;
+        tr.srclang = s.langCode || "en";
+        tr.src = `/pc/subvtt?url=${encodeURIComponent(s.url)}`;
+        tr.default = true;
+        v.appendChild(tr);
+        if (v.textTracks[0]) v.textTracks[0].mode = "showing";
+        d.classList.remove("open");
+      };
+      d.appendChild(el);
+    });
+  }
+  d.classList.add("open");
+}
+
+function showPlayerBuffer(msg) {
+  const b = document.getElementById("playerBufferBanner");
+  b.textContent = msg;
+  b.style.display = "block";
+}
+function hidePlayerBuffer() {
+  document.getElementById("playerBufferBanner").style.display = "none";
+}
+function wakeHud() {
+  const ov = document.getElementById("playerOverlay");
+  ov.classList.remove("hud-hidden");
+  clearTimeout(hudTimer);
+  hudTimer = setTimeout(() => {
+    if (!document.getElementById("playerDrawer").classList.contains("open")) {
+      ov.classList.add("hud-hidden");
+    }
+  }, 3800);
+}
+
+/* =====================================================================
+   SETTINGS & ENGINE TELEMETRY
+   ===================================================================== */
+function setWifiProfile(p) {
+  WIFI_PROFILE = p;
+  document.getElementById("profBalanced").classList.toggle("active", p === "balanced");
+  document.getElementById("profFiber").classList.toggle("active", p === "fiber4k");
+  applyUiMode(UI_MODE);
+  persistState();
+}
+
+async function setCacheLimit(mb) {
+  await engineFetch(`/config?maxCacheMB=${mb}`, { method: "POST" }).catch(() => {});
+  refreshTelemetry();
+}
+async function wipeEngineCache() {
+  await engineFetch("/wipe", { method: "POST" }).catch(() => {});
+  refreshTelemetry();
+}
+async function refreshTelemetry() {
+  try {
+    const res = await engineFetch("/health");
+    const d = await res.json();
+    const used = ((d.cache_bytes || 0) / (1024 * 1024)).toFixed(1);
+    const cap = ((d.cache_cap_bytes || 0) / (1024 * 1024)).toFixed(0);
+    document.getElementById("engineTelemetryText").textContent =
+      `Engine Online (v${d.version}) · Rolling Piece Cache: ${used} MB / ${cap} MB (${d.cache_items || 0} active .piece files) · Auto-Eviction Active`;
+  } catch (e) {
+    document.getElementById("engineTelemetryText").textContent = "Engine telemetry unavailable.";
+  }
+}
+
+/* =====================================================================
+   KEYBOARD & TV REMOTE SHORTCUTS
+   ===================================================================== */
+window.addEventListener("keydown", (e) => {
+  const playerOpen = document.getElementById("playerOverlay").classList.contains("open");
+  const detailOpen = document.getElementById("detailOverlay").classList.contains("open");
+  const tag = (document.activeElement && document.activeElement.tagName) || "";
+  if (tag === "INPUT") return;
+
+  if (e.key === "F11") {
+    e.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+
+  if (playerOpen) {
+    wakeHud();
+    if (e.key === "Escape") {
+      if (isTrueFullscreen || document.fullscreenElement) setTrueFullscreen(false);
+      else closePlayer();
+      return;
+    }
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggleVideoPlay(); return; }
+    if (e.key.toLowerCase() === "f") { toggleFullscreen(); return; }
+    if (e.key.toLowerCase() === "m") { toggleMute(); return; }
+    if (e.key.toLowerCase() === "g") { cycleGpuEnhance(); return; }
+    if (e.key === "ArrowRight") {
+      if (playerMode === "live") zapLive(1); else seekDelta(10);
+    } else if (e.key === "ArrowLeft") {
+      if (playerMode === "live") zapLive(-1); else seekDelta(-10);
+    } else if (e.key === "ArrowUp" && playerMode === "live") {
+      zapLive(1);
+    } else if (e.key === "ArrowDown" && playerMode === "live") {
+      zapLive(-1);
+    }
+    return;
+  }
+
+  if (e.key === "Escape") {
+    if (isTrueFullscreen || document.fullscreenElement) setTrueFullscreen(false);
+    else if (detailOpen) closeDetail();
+    else openGate();
+  }
+});
+
+/* =====================================================================
+   BOOT SEQUENCE
+   ===================================================================== */
+(async () => {
+  try {
+    const boot = await (await fetch("/pc/bootstrap")).json();
+    ENGINE_TOKEN = boot.token || "";
+    if (boot.wifiProfile) WIFI_PROFILE = boot.wifiProfile;
+  } catch (e) {}
+
+  try {
+    const st = await (await fetch("/pc/state")).json();
+    if (st) {
+      appState = Object.assign(appState, st);
+      if (st.profile) WIFI_PROFILE = st.profile;
+    }
+  } catch (e) {}
+
+  setWifiProfile(WIFI_PROFILE);
+  applyUiMode("auto");
+  loadHome();
+  loadLiveChannels();
+  setTimeout(() => document.getElementById("gateMoviesBtn").focus(), 300);
+})();
+</script>
+</body>
+</html>

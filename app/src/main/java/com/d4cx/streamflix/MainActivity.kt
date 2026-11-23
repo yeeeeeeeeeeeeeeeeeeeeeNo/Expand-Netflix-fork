@@ -52,8 +52,31 @@ class MainActivity : Activity() {
     private var screenCategories: View? = null
     private var screenLibrary: View? = null
     private var screenSettings: View? = null
+    private var screenLiveTv: View? = null
     private var currentTabIndex = 0
     private var lastFocusedBeforeOverlay: View? = null
+
+    // Live TV Studio Views
+    private lateinit var liveHeroMonogram: TextView
+    private lateinit var liveHeroLogo: ImageView
+    private lateinit var liveHeroBadge: TextView
+    private lateinit var liveHeroGroup: TextView
+    private lateinit var liveHeroTitle: TextView
+    private lateinit var btnLiveWatchNow: TextView
+    private lateinit var btnLivePickFeed: TextView
+    private lateinit var btnLiveBackToGate: TextView
+    private lateinit var rvLiveCategories: RecyclerView
+    private lateinit var inputLiveFilter: EditText
+    private lateinit var rvLiveChannels: RecyclerView
+    private lateinit var tvLiveStatus: TextView
+    private lateinit var liveCategoryAdapter: ChipAdapter
+    private lateinit var liveChannelAdapter: LiveChannelAdapter
+    private var currentLiveGroup = "VIP"
+    private var currentLiveChannel: LiveChannelItem? = null
+    private var currentLiveChannelsList: List<LiveChannelItem> = emptyList()
+    private var activeLiveFuture: Future<*>? = null
+    private var liveLoadedOnce = false
+    private var liveFilterRunnable: Runnable? = null
 
     // Home Views
     private lateinit var homeHeroBackdrop: ImageView
@@ -221,13 +244,56 @@ class MainActivity : Activity() {
         playCinematicBootIntro()
     }
 
-    private fun playCinematicBootIntro() {
+    private fun playCinematicBootIntro(skipBeam: Boolean = false) {
         val overlay = findViewById<View?>(R.id.noirBootOverlay) ?: return
         val beam = findViewById<View?>(R.id.noirBootBeam)
         val wordmark = findViewById<View?>(R.id.noirBootWordmark)
+        val choiceContainer = findViewById<View?>(R.id.noirModeChoiceContainer)
+        val btnMovies = findViewById<View?>(R.id.btnGateMoviesSeries)
+        val btnTv = findViewById<View?>(R.id.btnGateTvChannels)
 
         overlay.visibility = View.VISIBLE
         overlay.alpha = 1f
+
+        val focusInterp = android.view.animation.DecelerateInterpolator(1.6f)
+        val gateFocusListener = View.OnFocusChangeListener { v, hasFocus ->
+            v.animate()
+                .scaleX(if (hasFocus) 1.06f else 1.0f)
+                .scaleY(if (hasFocus) 1.06f else 1.0f)
+                .translationZ(if (hasFocus) 16f else 0f)
+                .setDuration(150)
+                .setInterpolator(focusInterp)
+                .start()
+        }
+        btnMovies?.onFocusChangeListener = gateFocusListener
+        btnTv?.onFocusChangeListener = gateFocusListener
+
+        btnMovies?.setOnClickListener {
+            dismissNoirGateAndEnter(targetTabIndex = 0)
+        }
+        btnTv?.setOnClickListener {
+            dismissNoirGateAndEnter(targetTabIndex = 5)
+        }
+
+        if (skipBeam) {
+            beam?.alpha = 0f
+            wordmark?.apply {
+                alpha = 1f
+                scaleX = 1f
+                scaleY = 1f
+            }
+            choiceContainer?.apply {
+                visibility = View.VISIBLE
+                alpha = 1f
+            }
+            btnMovies?.post { btnMovies.requestFocus() }
+            return
+        }
+
+        choiceContainer?.apply {
+            visibility = View.GONE
+            alpha = 0f
+        }
 
         // Phase 1: Vertical cinema light aperture slit expands cleanly
         beam?.apply {
@@ -237,18 +303,18 @@ class MainActivity : Activity() {
             animate()
                 .alpha(1f)
                 .scaleY(1.25f)
-                .setDuration(260)
+                .setDuration(240)
                 .withEndAction {
                     animate()
                         .scaleX(24f)
                         .alpha(0f)
-                        .setDuration(340)
+                        .setDuration(320)
                         .start()
                 }
                 .start()
         }
 
-        // Phase 2: Monumental NOIR wordmark materializes with Netflix-style optical zoom
+        // Phase 2: Monumental NOIR wordmark materializes, then reveals MOOVIES/SERIES & TV CHANNELS
         wordmark?.apply {
             alpha = 0f
             scaleX = 0.86f
@@ -257,32 +323,39 @@ class MainActivity : Activity() {
                 .alpha(1f)
                 .scaleX(1.0f)
                 .scaleY(1.0f)
-                .setStartDelay(210)
-                .setDuration(420)
+                .setStartDelay(190)
+                .setDuration(380)
                 .setInterpolator(android.view.animation.DecelerateInterpolator(2.0f))
                 .withEndAction {
-                    // Phase 3: Smooth cinema zoom-dissolve into live Hero Billboard
-                    animate()
-                        .scaleX(1.18f)
-                        .scaleY(1.18f)
-                        .alpha(0f)
-                        .setStartDelay(460)
-                        .setDuration(320)
-                        .start()
-                    overlay.animate()
-                        .alpha(0f)
-                        .setStartDelay(520)
-                        .setDuration(300)
-                        .withEndAction {
-                            overlay.visibility = View.GONE
-                            if (currentTabIndex == 0 && detailMovieOverlay?.visibility != View.VISIBLE && detailSeriesOverlay?.visibility != View.VISIBLE) {
-                                btnHomeWatch.requestFocus()
+                    choiceContainer?.apply {
+                        visibility = View.VISIBLE
+                        alpha = 0f
+                        translationY = 18f
+                        animate()
+                            .alpha(1f)
+                            .translationY(0f)
+                            .setDuration(280)
+                            .withEndAction {
+                                btnMovies?.requestFocus()
                             }
-                        }
-                        .start()
+                            .start()
+                    }
                 }
                 .start()
         }
+    }
+
+    private fun dismissNoirGateAndEnter(targetTabIndex: Int) {
+        val overlay = findViewById<View?>(R.id.noirBootOverlay) ?: return
+        switchTab(targetTabIndex, focusContent = false)
+        overlay.animate()
+            .alpha(0f)
+            .setDuration(240)
+            .withEndAction {
+                overlay.visibility = View.GONE
+                switchTab(targetTabIndex, focusContent = true)
+            }
+            .start()
     }
 
     private fun startLanSearchServer() {
@@ -320,26 +393,32 @@ class MainActivity : Activity() {
 
     private fun bindViews() {
         mainShellContainer = findViewById(R.id.mainShellContainer)
+        findViewById<View?>(R.id.btnNoirLogoGate)?.setOnClickListener {
+            playCinematicBootIntro(skipBeam = true)
+        }
         navRails = listOf(
             findViewById(R.id.navRailHome),
             findViewById(R.id.navRailSearch),
             findViewById(R.id.navRailCategories),
             findViewById(R.id.navRailLibrary),
-            findViewById(R.id.navRailSettings)
+            findViewById(R.id.navRailSettings),
+            findViewById(R.id.navRailLiveTv)
         )
         navIndicators = listOf(
             findViewById(R.id.navIndicatorHome),
             findViewById(R.id.navIndicatorSearch),
             findViewById(R.id.navIndicatorCategories),
             findViewById(R.id.navIndicatorLibrary),
-            findViewById(R.id.navIndicatorSettings)
+            findViewById(R.id.navIndicatorSettings),
+            findViewById(R.id.navIndicatorLiveTv)
         )
         navIcons = listOf(
             findViewById(R.id.navIconHome),
             findViewById(R.id.navIconSearch),
             findViewById(R.id.navIconCategories),
             findViewById(R.id.navIconLibrary),
-            findViewById(R.id.navIconSettings)
+            findViewById(R.id.navIconSettings),
+            findViewById(R.id.navIconLiveTv)
         )
         tvEngineRailBadge = findViewById(R.id.tvEngineRailBadge)
 
@@ -559,6 +638,10 @@ class MainActivity : Activity() {
             it.visibility = if (index == 4) View.VISIBLE else View.GONE
             (it as? ViewGroup)?.descendantFocusability = if (index == 4) ViewGroup.FOCUS_AFTER_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
         }
+        screenLiveTv?.let {
+            it.visibility = if (index == 5) View.VISIBLE else View.GONE
+            (it as? ViewGroup)?.descendantFocusability = if (index == 5) ViewGroup.FOCUS_AFTER_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        }
 
         when (index) {
             0 -> {
@@ -601,7 +684,162 @@ class MainActivity : Activity() {
                 refreshSettingsView()
                 if (focusContent) btnCache240.post { btnCache240.requestFocus() }
             }
+            5 -> {
+                val tvView = ensureLiveTvInflated()
+                tvView.visibility = View.VISIBLE
+                (tvView as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+                if (!liveLoadedOnce) loadLiveTvChannels()
+                if (focusContent) {
+                    btnLiveWatchNow.post { btnLiveWatchNow.requestFocus() }
+                }
+            }
         }
+    }
+
+    private fun ensureLiveTvInflated(): View {
+        if (screenLiveTv == null) {
+            val stub = findViewById<ViewStub>(R.id.stubLiveTv)
+            val inflated = stub.inflate()
+            screenLiveTv = inflated
+            bindLiveTvViews(inflated)
+            setupLiveTvScreen()
+        }
+        return screenLiveTv!!
+    }
+
+    private fun bindLiveTvViews(root: View) {
+        liveHeroMonogram = root.findViewById(R.id.liveHeroMonogram)
+        liveHeroLogo = root.findViewById(R.id.liveHeroLogo)
+        liveHeroBadge = root.findViewById(R.id.liveHeroBadge)
+        liveHeroGroup = root.findViewById(R.id.liveHeroGroup)
+        liveHeroTitle = root.findViewById(R.id.liveHeroTitle)
+        btnLiveWatchNow = root.findViewById(R.id.btnLiveWatchNow)
+        btnLivePickFeed = root.findViewById(R.id.btnLivePickFeed)
+        btnLiveBackToGate = root.findViewById(R.id.btnLiveBackToGate)
+        rvLiveCategories = root.findViewById(R.id.rvLiveCategories)
+        inputLiveFilter = root.findViewById(R.id.inputLiveFilter)
+        rvLiveChannels = root.findViewById(R.id.rvLiveChannels)
+        tvLiveStatus = root.findViewById(R.id.tvLiveStatus)
+    }
+
+    private fun setupLiveTvScreen() {
+        val catChips = listOf(
+            ChipOption("VIP", "★ VIP"),
+            ChipOption("beIN & Sports VIP", "beIN & Sports"),
+            ChipOption("Cartoon & Kids", "Cartoon & Kids"),
+            ChipOption("Arabic Satellite", "Nilesat"),
+            ChipOption("Samsung TV+", "Samsung+"),
+            ChipOption("ALL", "All")
+        )
+        rvLiveCategories.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        liveCategoryAdapter = ChipAdapter(catChips, currentLiveGroup) { chip ->
+            currentLiveGroup = chip.key
+            liveCategoryAdapter.setSelected(chip.key)
+            loadLiveTvChannels()
+        }
+        rvLiveCategories.adapter = liveCategoryAdapter
+
+        rvLiveChannels.layoutManager = GridLayoutManager(this, 4)
+        liveChannelAdapter = LiveChannelAdapter(
+            channels = emptyList(),
+            onChannelClick = { ch ->
+                bindLiveHero(ch)
+                launchLiveChannel(ch, feedIndex = 0)
+            },
+            onChannelFocused = { ch ->
+                bindLiveHero(ch)
+            }
+        )
+        rvLiveChannels.adapter = liveChannelAdapter
+
+        btnLiveWatchNow.setOnClickListener {
+            currentLiveChannel?.let { launchLiveChannel(it, feedIndex = 0) }
+        }
+
+        btnLivePickFeed.setOnClickListener {
+            val ch = currentLiveChannel ?: return@setOnClickListener
+            val feeds = if (ch.backups.isNotEmpty()) ch.backups else listOf(LiveFeedItem(ch.url, ch.source, ch.quality))
+            val labels = feeds.mapIndexed { idx, f -> "Feed ${idx + 1}: ${f.source} (${f.quality})" }.toTypedArray()
+            android.app.AlertDialog.Builder(this)
+                .setTitle("${ch.name} — Select Broadcast Feed")
+                .setItems(labels) { _, which ->
+                    launchLiveChannel(ch, feedIndex = which)
+                }
+                .show()
+        }
+
+        btnLiveBackToGate.setOnClickListener {
+            playCinematicBootIntro(skipBeam = true)
+        }
+
+        inputLiveFilter.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                liveFilterRunnable?.let { mainHandler.removeCallbacks(it) }
+                val r = Runnable { loadLiveTvChannels() }
+                liveFilterRunnable = r
+                mainHandler.postDelayed(r, 240L)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        val initialVip = LiveTvRepository.getBuiltInVipChannels()
+        currentLiveChannelsList = initialVip
+        liveChannelAdapter.update(initialVip)
+        initialVip.firstOrNull()?.let { bindLiveHero(it) }
+    }
+
+    private fun bindLiveHero(ch: LiveChannelItem) {
+        currentLiveChannel = ch
+        liveHeroTitle.text = ch.name
+        val mono = ch.name.replace(Regex("[^A-Za-z0-9]"), "").take(5).uppercase().ifEmpty { "TV" }
+        liveHeroMonogram.text = mono
+        liveHeroBadge.text = if (ch.verified) "★ LIVE · ${ch.quality}" else "● LIVE · ${ch.quality}"
+        val feedTotal = ch.backups.size.coerceAtLeast(1)
+        liveHeroGroup.text = "${ch.group} · ${ch.source}"
+        btnLivePickFeed.text = "Feeds ($feedTotal)"
+        if (ch.logo.isNotEmpty()) {
+            liveHeroMonogram.visibility = View.VISIBLE
+            ImageLoader.load(ch.logo, liveHeroLogo, 400, 220, keepPreviousWhileLoading = false) { loaded ->
+                liveHeroMonogram.visibility = if (loaded) View.GONE else View.VISIBLE
+            }
+        } else {
+            liveHeroLogo.setImageDrawable(null)
+            liveHeroMonogram.visibility = View.VISIBLE
+        }
+    }
+
+    private fun loadLiveTvChannels() {
+        liveLoadedOnce = true
+        val grp = currentLiveGroup
+        val query = if (::inputLiveFilter.isInitialized) inputLiveFilter.text.toString().trim() else ""
+        activeLiveFuture?.cancel(true)
+        activeLiveFuture = backgroundExecutor.submit {
+            JewEngineManager.ensureRunning(this)
+            val list = LiveTvRepository.fetchChannels(grp, query)
+            mainHandler.post {
+                if (isDestroyed) return@post
+                currentLiveChannelsList = list
+                liveChannelAdapter.update(list)
+                tvLiveStatus.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+                if (list.isEmpty()) {
+                    tvLiveStatus.text = "No channels matched filter."
+                } else if (currentLiveChannel == null || list.none { it.id == currentLiveChannel?.id }) {
+                    bindLiveHero(list.first())
+                }
+            }
+        }
+    }
+
+    private fun launchLiveChannel(ch: LiveChannelItem, feedIndex: Int = 0) {
+        val list = currentLiveChannelsList.ifEmpty { listOf(ch) }
+        val chIdx = list.indexOfFirst { it.id == ch.id }.coerceAtLeast(0)
+        PlayerActivity.startLive(
+            context = this,
+            channels = list,
+            channelIndex = chIdx,
+            feedIndex = feedIndex
+        )
     }
 
     // ====================================================================
@@ -2160,9 +2398,16 @@ class MainActivity : Activity() {
                 clearSearchResults()
                 return true
             }
-            if (currentTabIndex != 0) {
-                switchTab(0, focusContent = true)
-                return true
+            val bootOverlay = findViewById<View?>(R.id.noirBootOverlay)
+            if (bootOverlay?.visibility != View.VISIBLE) {
+                if (currentTabIndex == 0 || currentTabIndex == 5) {
+                    playCinematicBootIntro(skipBeam = true)
+                    return true
+                }
+                if (currentTabIndex != 0) {
+                    switchTab(0, focusContent = true)
+                    return true
+                }
             }
         }
         return super.dispatchKeyEvent(event)
@@ -2205,6 +2450,7 @@ class MainActivity : Activity() {
         activeSearchFuture?.cancel(true)
         activeCatalogFuture?.cancel(true)
         activeMovieStreamsFuture?.cancel(true)
+        activeLiveFuture?.cancel(true)
         mainHandler.removeCallbacksAndMessages(null)
         backgroundExecutor.shutdownNow()
         super.onDestroy()

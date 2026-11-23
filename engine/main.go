@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,8 +16,9 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"runtime/debug"
- "regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -163,19 +166,63 @@ type Engine struct {
 	dnsIndex       atomic.Uint32
 }
 
+func generateLocalToken() string {
+	b := make([]byte, 24)
+	if _, err := rand.Read(b); err == nil {
+		return hex.EncodeToString(b)
+	}
+	return fmt.Sprintf("noir-pc-local-token-%d-9f8e7d6c5b4a", time.Now().UnixNano())
+}
+
 func main() {
 	port := flag.Int("port", 8811, "Port for JewEngine HTTP micro-server")
 	cacheDir := flag.String("cacheDir", "./torrent_cache", "Directory for bounded rolling piece storage")
 	token := flag.String("token", "", "Per-launch local client credential")
 	maxCacheMB := flag.Int("maxCacheMB", 400, "Rolling FIFO disk cache limit in MB")
+	noWindow := flag.Bool("no-window", false, "Run headless without launching the desktop app window")
 	flag.Parse()
+
+	desktopMode := false
 	if len(*token) < 32 {
-		log.Fatal("A local authentication token is required")
+		if runtime.GOOS == "windows" {
+			desktopMode = true
+			*token = generateLocalToken()
+			if *port == 8811 {
+				*port = 8822
+			}
+			if *cacheDir == "./torrent_cache" {
+				localApp := os.Getenv("LOCALAPPDATA")
+				if localApp == "" {
+					localApp = os.TempDir()
+				}
+				*cacheDir = filepath.Join(localApp, "NOCTURNE", "torrent_cache")
+			}
+			if *maxCacheMB == 400 {
+				*maxCacheMB = 600
+			}
+		} else {
+			log.Fatal("A local authentication token is required")
+		}
 	}
 
-	// Keep Go memory footprint compact for 32-bit 2GB Android TV devices
-	debug.SetMemoryLimit(160 << 20)
-	debug.SetGCPercent(50)
+	pcActiveToken = *token
+	pcListenPort = *port
+
+	// Single-instance handoff on Windows PC: if NOIR is already running, focus existing native window
+	if desktopMode && !*noWindow {
+		if focusExistingNoirWindow() {
+			return
+		}
+	}
+
+	// Tune memory footprint per platform (compact on 2GB Android TV, generous on Windows PC)
+	if runtime.GOOS == "windows" {
+		debug.SetMemoryLimit(512 << 20)
+		debug.SetGCPercent(75)
+	} else {
+		debug.SetMemoryLimit(160 << 20)
+		debug.SetGCPercent(50)
+	}
 
 	capMB := *maxCacheMB
 	if capMB < 160 {
@@ -271,6 +318,21 @@ func main() {
 	mux.HandleFunc("/drop", eng.handleDrop)
 	mux.HandleFunc("/wipe", eng.handleWipe)
 	mux.HandleFunc("/shutdown", eng.handleShutdown)
+	mux.HandleFunc("/live/channels", eng.handleLiveChannels)
+	mux.HandleFunc("/live/proxy", eng.handleLiveProxy)
+	mux.HandleFunc("/pc/bootstrap", eng.handlePcBootstrap)
+	mux.HandleFunc("/pc/catalog", eng.handlePcCatalog)
+	mux.HandleFunc("/pc/search", eng.handlePcSearch)
+	mux.HandleFunc("/pc/meta", eng.handlePcMeta)
+	mux.HandleFunc("/pc/streams", eng.handlePcStreams)
+	mux.HandleFunc("/pc/subtitles", eng.handlePcSubtitles)
+	mux.HandleFunc("/pc/subvtt", eng.handlePcSubtitleVtt)
+	mux.HandleFunc("/pc/audiotracks", eng.handlePcAudioTracks)
+	mux.HandleFunc("/pc/ffmpeg", eng.handlePcFfmpegStream)
+	mux.HandleFunc("/pc/state", eng.handlePcState)
+	mux.HandleFunc("/icon.png", eng.handleNocturneIcon)
+	mux.HandleFunc("/favicon.ico", eng.handleNocturneIcon)
+	mux.HandleFunc("/", eng.handleNoirUI)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf("127.0.0.1:%d", *port),
@@ -288,15 +350,50 @@ func main() {
 		server.Close()
 	}()
 
+	ln, err := net.Listen("tcp", server.Addr)
+	if err != nil && desktopMode {
+		ln, err = net.Listen("tcp", "127.0.0.1:0")
+	}
+	if err != nil {
+		log.Fatalf("[JewEngine] Failed to bind %s: %v", server.Addr, err)
+	}
+	actualPort := *port
+	if tcpAddr, ok := ln.Addr().(*net.TCPAddr); ok {
+		actualPort = tcpAddr.Port
+		pcListenPort = actualPort
+	}
+
+	if desktopMode && !*noWindow {
+		appURL := fmt.Sprintf("http://127.0.0.1:%d/", actualPort)
+		go func() {
+			log.Printf("[JewEngine] Native Desktop Engine Ready on %s", appURL)
+			if err := server.Serve(ln); err != nil && err != http.ErrServerClosed {
+				log.Printf("[JewEngine] Server error: %v", err)
+			}
+		}()
+		runNativeDesktopWindow(appURL, func() {
+			killAllFfmpegProcs()
+			_ = server.Close()
+		})
+		log.Println("[JewEngine] Native window closed. Shutdown complete.")
+		return
+	}
+
 	log.Printf("[JewEngine] Ready on http://127.0.0.1:%d", *port)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := server.Serve(ln); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("[JewEngine] Server error: %v", err)
 	}
+	killAllFfmpegProcs()
 	log.Println("[JewEngine] Shutdown complete.")
 }
 
 func authenticated(token string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p := r.URL.Path
+		if p == "/" || p == "/index.html" || p == "/icon.png" || p == "/favicon.ico" || p == "/live/channels" || p == "/live/proxy" || strings.HasPrefix(p, "/pc/") {
+			next.ServeHTTP(w, r)
+			return
+		}
 		supplied := r.Header.Get("X-Engine-Token")
 		if supplied == "" && r.URL.Path == "/stream" {
 			supplied = r.URL.Query().Get("token")

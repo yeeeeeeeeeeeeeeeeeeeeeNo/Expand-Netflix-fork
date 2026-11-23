@@ -85,3 +85,22 @@ data class EngineStatsSnapshot(
     val activeTorrents: Int,
     val activeStreams: Int
 )
+
+data class LiveFeedItem(
+    val url: String,
+    val source: String,
+    val quality: String,
+    val protocol: String = "HLS"
+)
+
+data class LiveChannelItem(
+    val id: String,
+    val name: String,
+    val logo: String,
+    val group: String,
+    val quality: String,
+    val source: String,
+    val url: String,
+    val verified: Boolean = false,
+    val backups: List<LiveFeedItem> = emptyList()
+)

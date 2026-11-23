@@ -500,3 +500,74 @@ class StreamAdapter(
 
     override fun getItemCount(): Int = streams.size
 }
+
+// ====================================================================
+// 8. LIVE TV CHANNELS GRID ADAPTER (WITH OFFICIAL NETWORK LOGOS)
+// ====================================================================
+class LiveChannelAdapter(
+    private var channels: List<LiveChannelItem>,
+    private val onChannelClick: (LiveChannelItem) -> Unit,
+    private val onChannelFocused: ((LiveChannelItem) -> Unit)? = null
+) : RecyclerView.Adapter<LiveChannelAdapter.VH>() {
+
+    private val interpolator = DecelerateInterpolator(1.5f)
+
+    class VH(val view: View) : RecyclerView.ViewHolder(view) {
+        val monogram: TextView = view.findViewById(R.id.liveCardMonogram)
+        val logo: ImageView = view.findViewById(R.id.liveCardLogo)
+        val badgeLive: TextView = view.findViewById(R.id.liveCardBadgeLive)
+        val quality: TextView = view.findViewById(R.id.liveCardQuality)
+        val title: TextView = view.findViewById(R.id.liveCardTitle)
+        val feedsCount: TextView = view.findViewById(R.id.liveCardFeedsCount)
+    }
+
+    fun update(newChannels: List<LiveChannelItem>) {
+        channels = newChannels
+        notifyDataSetChanged()
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_live_channel_card, parent, false)
+        return VH(v)
+    }
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val ch = channels[position]
+        val mono = ch.name.replace(Regex("[^A-Za-z0-9]"), "").take(4).uppercase().ifEmpty { "TV" }
+        holder.monogram.text = mono
+        holder.title.text = ch.name
+        holder.quality.text = ch.quality.replace(" FHD", "").replace(" UHD", "")
+        holder.badgeLive.text = if (ch.verified) "★ LIVE" else "● LIVE"
+        val feedTotal = ch.backups.size.coerceAtLeast(1)
+        holder.feedsCount.text = if (feedTotal > 1) "$feedTotal FEEDS" else "DIRECT"
+
+        if (ch.logo.isNotEmpty()) {
+            holder.monogram.visibility = View.VISIBLE
+            ImageLoader.load(ch.logo, holder.logo, 320, 180) { loaded ->
+                holder.monogram.visibility = if (loaded) View.GONE else View.VISIBLE
+            }
+        } else {
+            holder.logo.setImageDrawable(null)
+            holder.monogram.visibility = View.VISIBLE
+        }
+
+        holder.view.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                onChannelFocused?.invoke(ch)
+            }
+            v.animate()
+                .scaleX(if (hasFocus) 1.045f else 1f)
+                .scaleY(if (hasFocus) 1.045f else 1f)
+                .translationZ(if (hasFocus) 12f else 0f)
+                .setDuration(130)
+                .setInterpolator(interpolator)
+                .start()
+        }
+
+        holder.view.setOnClickListener {
+            onChannelClick(ch)
+        }
+    }
+
+    override fun getItemCount(): Int = channels.size
+}

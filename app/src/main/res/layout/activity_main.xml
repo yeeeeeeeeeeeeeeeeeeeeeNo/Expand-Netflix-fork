@@ -24,8 +24,15 @@
             android:paddingEnd="34dp">
 
             <TextView
+                android:id="@+id/btnNoirLogoGate"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="36dp"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:background="@drawable/bg_rail_icon"
                 android:text="NOIR"
                 android:textColor="#FFFFFF"
                 android:textSize="20sp"
@@ -165,6 +172,49 @@
                     android:visibility="gone" />
             </FrameLayout>
 
+            <!-- TV Channels Tab -->
+            <FrameLayout
+                android:id="@+id/navRailLiveTv"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="6dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:nextFocusLeft="@+id/navRailCategories"
+                android:nextFocusRight="@+id/navRailLibrary"
+                android:background="@drawable/bg_rail_icon">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <ImageView
+                        android:id="@+id/navIconLiveTv"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:src="@drawable/ic_nav_categories"
+                        android:tint="#787B85"
+                        android:contentDescription="TV Channels" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="7dp"
+                        android:text="TV Channels"
+                        android:textColor="#D0D2DA"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+                <View
+                    android:id="@+id/navIndicatorLiveTv"
+                    android:layout_width="26dp"
+                    android:layout_height="2.5dp"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:background="@drawable/bg_active_indicator"
+                    android:visibility="gone" />
+            </FrameLayout>
+
             <!-- My List / Library Tab -->
             <FrameLayout
                 android:id="@+id/navRailLibrary"
@@ -175,7 +225,7 @@
                 android:paddingEnd="14dp"
                 android:focusable="true"
                 android:clickable="true"
-                android:nextFocusLeft="@+id/navRailCategories"
+                android:nextFocusLeft="@+id/navRailLiveTv"
                 android:nextFocusRight="@+id/navRailSettings"
                 android:background="@drawable/bg_rail_icon">
                 <LinearLayout
@@ -579,6 +629,7 @@
 
             <ViewStub android:id="@+id/stubSearch" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_search" />
             <ViewStub android:id="@+id/stubCategories" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_categories" />
+            <ViewStub android:id="@+id/stubLiveTv" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_livetv" />
             <ViewStub android:id="@+id/stubLibrary" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_library" />
             <ViewStub android:id="@+id/stubSettings" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_screen_settings" />
         </FrameLayout>
@@ -587,7 +638,7 @@
     <ViewStub android:id="@+id/stubDetailMovie" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_detail_movie" />
     <ViewStub android:id="@+id/stubDetailSeries" android:layout_width="match_parent" android:layout_height="match_parent" android:layout="@layout/layout_detail_series" />
 
-    <!-- Cinematic Netflix-Style Monochrome NOIR First-Boot Intro Overlay -->
+    <!-- Cinematic Monochrome NOIR Dual-Portal Entrance Gate (Zero Clipping) -->
     <FrameLayout
         android:id="@+id/noirBootOverlay"
         android:layout_width="match_parent"
@@ -595,7 +646,9 @@
         android:background="#000000"
         android:elevation="40dp"
         android:clickable="true"
-        android:focusable="false">
+        android:focusable="false"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
         <View
             android:id="@+id/noirBootBeam"
@@ -612,27 +665,147 @@
             android:layout_gravity="center"
             android:orientation="vertical"
             android:gravity="center"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:padding="28dp"
             android:alpha="0">
+
             <TextView
                 android:id="@+id/noirBootTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="NOIR"
                 android:textColor="#FFFFFF"
-                android:textSize="62sp"
+                android:textSize="54sp"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.34" />
+                android:letterSpacing="0.42" />
+
+            <View
+                android:layout_width="44dp"
+                android:layout_height="1.5dp"
+                android:layout_marginTop="10dp"
+                android:background="#44FFFFFF" />
+
             <TextView
                 android:id="@+id/noirBootSub"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="CINEMA"
-                android:textColor="#88FFFFFF"
-                android:textSize="11sp"
+                android:layout_marginTop="10dp"
+                android:text="CHOOSE MODE"
+                android:textColor="#788094"
+                android:textSize="9.5sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.55" />
+                android:letterSpacing="0.48" />
+
+            <!-- Dual Architectural Showcase Portals (Generous Padding Prevents Scale Clipping) -->
+            <LinearLayout
+                android:id="@+id/noirModeChoiceContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="24dp"
+                android:padding="20dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:alpha="0"
+                android:visibility="gone">
+
+                <!-- Option 1: MOVIES & SERIES -->
+                <LinearLayout
+                    android:id="@+id/btnGateMoviesSeries"
+                    android:layout_width="320dp"
+                    android:layout_height="198dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="24dp"
+                    android:layout_marginEnd="16dp"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:nextFocusRight="@+id/btnGateTvChannels"
+                    android:background="@drawable/bg_gate_portal">
+
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_gate_icon_ring">
+                        <ImageView
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_gate_cinema"
+                            android:contentDescription="Movies and Series" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="MOVIES &amp; SERIES"
+                        android:textColor="#FFFFFF"
+                        android:textSize="19sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="4K HDR Films · Series · Anime · Arabic Classics"
+                        android:textColor="#8A92A6"
+                        android:textSize="10.5sp"
+                        android:gravity="center" />
+                </LinearLayout>
+
+                <!-- Option 2: TV CHANNELS -->
+                <LinearLayout
+                    android:id="@+id/btnGateTvChannels"
+                    android:layout_width="320dp"
+                    android:layout_height="198dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="24dp"
+                    android:layout_marginStart="16dp"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:nextFocusLeft="@+id/btnGateMoviesSeries"
+                    android:background="@drawable/bg_gate_portal">
+
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_gate_icon_ring">
+                        <ImageView
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_gate_livetv"
+                            android:contentDescription="Live TV Channels" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="TV CHANNELS"
+                        android:textColor="#FFFFFF"
+                        android:textSize="19sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="beIN Sports · Cartoon Network · MBC 3 · Nilesat"
+                        android:textColor="#8A92A6"
+                        android:textSize="10.5sp"
+                        android:gravity="center" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
     </FrameLayout>
 </FrameLayout>

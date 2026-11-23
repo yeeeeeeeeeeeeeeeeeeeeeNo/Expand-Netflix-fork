@@ -55,11 +55,13 @@ object ImageLoader {
         imageView: ImageView,
         reqWidth: Int = 300,
         reqHeight: Int = 450,
-        keepPreviousWhileLoading: Boolean = false
+        keepPreviousWhileLoading: Boolean = false,
+        onResult: ((Boolean) -> Unit)? = null
     ) {
         if (url.isNullOrEmpty()) {
             imageView.tag = null
             imageView.setImageDrawable(null)
+            onResult?.invoke(false)
             return
         }
 
@@ -70,6 +72,7 @@ object ImageLoader {
             imageView.animate().cancel()
             imageView.alpha = 1f
             imageView.setImageBitmap(cached)
+            onResult?.invoke(true)
             return
         }
 
@@ -93,10 +96,19 @@ object ImageLoader {
                                 imageView.setImageBitmap(bitmap)
                                 imageView.animate().alpha(1f).setDuration(110).start()
                             }
+                            onResult?.invoke(true)
                         }
                     }
+                } else {
+                    mainHandler.post {
+                        if (imageView.tag == url) onResult?.invoke(false)
+                    }
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+                mainHandler.post {
+                    if (imageView.tag == url) onResult?.invoke(false)
+                }
+            }
         }
     }
 
@@ -133,7 +145,8 @@ object ImageLoader {
                 readTimeout = 4200
                 instanceFollowRedirects = true
                 useCaches = true
-                setRequestProperty("User-Agent", "NOIR-TV/2.0")
+                setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+                setRequestProperty("Accept", "image/avif,image/webp,image/png,image/*,*/*;q=0.8")
             }
             if (connection.responseCode !in 200..299) return null
 
@@ -176,7 +189,12 @@ object ImageLoader {
 
         options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
         options.inJustDecodeBounds = false
-        options.inPreferredConfig = Bitmap.Config.RGB_565
+        val isPng = bytes.size >= 4 &&
+            bytes[0] == 0x89.toByte() &&
+            bytes[1] == 0x50.toByte() &&
+            bytes[2] == 0x4E.toByte() &&
+            bytes[3] == 0x47.toByte()
+        options.inPreferredConfig = if (isPng) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
     }
 

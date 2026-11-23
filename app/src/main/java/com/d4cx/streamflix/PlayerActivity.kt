@@ -32,6 +32,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.FilteringMediaSource
 import androidx.media3.exoplayer.source.MediaSource
@@ -116,8 +117,12 @@ class PlayerActivity : Activity() {
 
     private var broadcastItems:List<ArabicBroadcast> = emptyList()
     private var broadcastIndex=0
+    private var liveChannelList: List<LiveChannelItem> = emptyList()
+    private var liveChannelIdx: Int = 0
     private var mediaType: String = "series"
     private var mediaId: String = ""
+    private val isLiveTv: Boolean
+        get() = mediaId.startsWith("live_")
     private var mediaTitle: String = ""
     private var mediaPoster: String = ""
     private var mediaBackdrop: String = ""
@@ -189,6 +194,18 @@ class PlayerActivity : Activity() {
         override fun run() {
             val p = player
             findViewById<TitleLoadingView>(R.id.loadingTitle).setFill(if(p!=null && p.bufferedPosition>p.currentPosition) ((p.bufferedPosition-p.currentPosition)/4000f).coerceIn(0f,1f) else -1f)
+            if (isLiveTv) {
+                tvTimeCurrent.text = "● LIVE"
+                tvTimeDuration.text = ""
+                seekBar.visibility = View.INVISIBLE
+                val vf = p?.videoFormat
+                val curStream = availableStreams.getOrNull(currentStreamIndex)
+                val resTag = if (vf != null && vf.height > 0) "${vf.width}×${vf.height}" else (curStream?.quality ?: "HD")
+                val feedLabel = "Feed ${currentStreamIndex + 1}/${availableStreams.size.coerceAtLeast(1)}"
+                tvPlayerStreamBadge.text = "● LIVE • $resTag • $feedLabel"
+                mainHandler.postDelayed(this, 800)
+                return
+            }
             if (p != null && !isScrubbing && !isUserTrackingSeek && !seekBar.hasFocus() && p.duration > 0) {
                 val position = p.currentPosition
                 val duration = p.duration
@@ -260,11 +277,15 @@ class PlayerActivity : Activity() {
         mediaBackdrop = intent.getStringExtra(EXTRA_BACKDROP) ?: ""
         seasonNum = intent.getIntExtra(EXTRA_SEASON, 1)
         episodeNum = intent.getIntExtra(EXTRA_EPISODE, 1)
+        if (isLiveTv && pendingLiveChannels.isNotEmpty()) {
+            liveChannelList = pendingLiveChannels
+            liveChannelIdx = pendingLiveChannelIndex.coerceIn(0, liveChannelList.size - 1)
+        }
 
         initViews()
         initExoPlayer()
         setupListeners()
-        loadSubtitlesInBackground()
+        if (!isLiveTv) loadSubtitlesInBackground()
 
         startStatsPolling()
 
@@ -289,7 +310,7 @@ class PlayerActivity : Activity() {
             currentStreamIndex = pendingStreamIndex.coerceIn(0, (availableStreams.size - 1).coerceAtLeast(0))
             pendingStreams = null
             if (availableStreams.isNotEmpty()) {
-                val savedPos = WatchHistoryManager.getPlaybackPosition(this, mediaType, mediaId, seasonNum, episodeNum)
+                val savedPos = if (isLiveTv) 0L else WatchHistoryManager.getPlaybackPosition(this, mediaType, mediaId, seasonNum, episodeNum)
                 playStreamItem(availableStreams[currentStreamIndex], savedPos)
             } else {
                 resolveAndPlayStream()
@@ -364,7 +385,7 @@ class PlayerActivity : Activity() {
 
         applySubtitleCustomization()
 
-        if (mediaType.equals("movie", ignoreCase = true)) {
+        if (mediaType.equals("movie", ignoreCase = true) && !isLiveTv) {
             btnPrev.visibility = View.GONE
             btnNext.visibility = View.GONE
             btnPlayPause.nextFocusLeftId = View.NO_ID
@@ -378,6 +399,11 @@ class PlayerActivity : Activity() {
             btnNext.nextFocusLeftId = R.id.btnPlayPause
             btnNext.nextFocusRightId = R.id.btnSources
             btnSources.nextFocusLeftId = R.id.btnNext
+        }
+        if (isLiveTv) {
+            seekBar.visibility = View.INVISIBLE
+            tvTimeCurrent.text = "● LIVE"
+            tvTimeDuration.text = ""
         }
 
         btnPlayPause.requestFocus()
@@ -393,25 +419,44 @@ class PlayerActivity : Activity() {
     }
 
     private fun initExoPlayer() {
-        // Calibrated zero-stall torrent buffer profile: robust playback runway with 128MB cushion
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                /* minBufferMs = */ 30_000,
-                /* maxBufferMs = */ 90_000,
-                /* bufferForPlaybackMs = */ 4_000,
-                /* bufferForPlaybackAfterRebufferMs = */ 8_000
-            )
-            .setTargetBufferBytes(48 * 1024 * 1024)
-            .setPrioritizeTimeOverSizeThresholds(false)
-            .build()
+        // Live TV uses tight low-latency live window buffer; VOD uses deep 30s-90s torrent cushion
+        val loadControl = if (isLiveTv) {
+            DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    /* minBufferMs = */ 6_000,
+                    /* maxBufferMs = */ 20_000,
+                    /* bufferForPlaybackMs = */ 1_500,
+                    /* bufferForPlaybackAfterRebufferMs = */ 2_500
+                )
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .build()
+        } else {
+            DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    /* minBufferMs = */ 30_000,
+                    /* maxBufferMs = */ 90_000,
+                    /* bufferForPlaybackMs = */ 4_000,
+                    /* bufferForPlaybackAfterRebufferMs = */ 8_000
+                )
+                .setTargetBufferBytes(48 * 1024 * 1024)
+                .setPrioritizeTimeOverSizeThresholds(false)
+                .build()
+        }
 
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setAllowCrossProtocolRedirects(true)
-            .setUserAgent("JewFlix/2.0 (Linux; Android TV)")
-            .setConnectTimeoutMs(45_000)
-            .setReadTimeoutMs(60_000)
+            .setUserAgent(if (isLiveTv) "TiviMate/4.7.0 (Linux; Android 11; Shield Android TV)" else "JewFlix/2.0 (Linux; Android TV)")
+            .setDefaultRequestProperties(if (isLiveTv) mapOf("Cache-Control" to "no-cache", "Pragma" to "no-cache") else emptyMap())
+            .setConnectTimeoutMs(if (isLiveTv) 15_000 else 45_000)
+            .setReadTimeoutMs(if (isLiveTv) 20_000 else 60_000)
 
-        val dsf = DefaultDataSource.Factory(this, PlaybackCache.factory(this,httpDataSourceFactory))
+        // CRITICAL: NEVER route live HLS/TS broadcasts through PlaybackCache (SimpleCache)!
+        // Caching index.m3u8 on disk freezes live streams after ~5-8s and rewinds on reopen.
+        val dsf = if (isLiveTv) {
+            DefaultDataSource.Factory(this, httpDataSourceFactory)
+        } else {
+            DefaultDataSource.Factory(this, PlaybackCache.factory(this, httpDataSourceFactory))
+        }
         this.dataSourceFactory = dsf
 
         val standardExtractors = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
@@ -422,7 +467,7 @@ class PlayerActivity : Activity() {
         }
 
         val msFactory = DefaultMediaSourceFactory(dsf, extractorsFactory)
-            .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(6))
+            .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(if (isLiveTv) 12 else 6))
         this.mediaSourceFactory = msFactory
 
         val renderersFactory = DefaultRenderersFactory(this).apply {
@@ -447,39 +492,49 @@ class PlayerActivity : Activity() {
                     Player.STATE_READY -> {
                         hideBuffering()
                         updatePlayPauseIcon()
-                        player?.duration?.let { dur ->
-                            if (dur > 0) tvTimeDuration.text = formatTime(dur)
-                            if (!hasResumedInitialPosition) {
-                                hasResumedInitialPosition = true
-                                val savedPos = WatchHistoryManager.getPlaybackPosition(
-                                    this@PlayerActivity, mediaType, mediaId, seasonNum, episodeNum
-                                )
-                                if (savedPos > 10_000 && dur > 30_000 && savedPos < (dur - 30_000) && (player?.currentPosition ?: 0L) < 5_000) {
-                                    player?.seekTo(savedPos)
-                                    showSeekOsd("Resumed (${formatTime(savedPos)})")
+                        if (!isLiveTv) {
+                            player?.duration?.let { dur ->
+                                if (dur > 0) tvTimeDuration.text = formatTime(dur)
+                                if (!hasResumedInitialPosition) {
+                                    hasResumedInitialPosition = true
+                                    val savedPos = WatchHistoryManager.getPlaybackPosition(
+                                        this@PlayerActivity, mediaType, mediaId, seasonNum, episodeNum
+                                    )
+                                    if (savedPos > 10_000 && dur > 30_000 && savedPos < (dur - 30_000) && (player?.currentPosition ?: 0L) < 5_000) {
+                                        player?.seekTo(savedPos)
+                                        showSeekOsd("Resumed (${formatTime(savedPos)})")
+                                    }
                                 }
                             }
                         }
                     }
                     Player.STATE_ENDED -> {
-                        hideBuffering()
-                        showHud()
-                        btnPlayPause.setImageResource(R.drawable.ic_player_play)
-                        player?.duration?.let { dur ->
-                            WatchHistoryManager.savePlaybackPosition(
-                                context = this@PlayerActivity,
-                                type = mediaType,
-                                id = mediaId,
-                                season = seasonNum,
-                                episode = episodeNum,
-                                positionMs = dur,
-                                durationMs = dur,
-                                title = mediaTitle.substringBefore(" — "),
-                                poster = mediaPoster,
-                                backdrop = mediaBackdrop
-                            )
+                        if (isLiveTv) {
+                            // Live playlist segment boundary: snap seamlessly back to live edge instead of stopping!
+                            showBuffering("Syncing live edge...")
+                            player?.seekToDefaultPosition()
+                            player?.prepare()
+                            player?.playWhenReady = true
+                        } else {
+                            hideBuffering()
+                            showHud()
+                            btnPlayPause.setImageResource(R.drawable.ic_player_play)
+                            player?.duration?.let { dur ->
+                                WatchHistoryManager.savePlaybackPosition(
+                                    context = this@PlayerActivity,
+                                    type = mediaType,
+                                    id = mediaId,
+                                    season = seasonNum,
+                                    episode = episodeNum,
+                                    positionMs = dur,
+                                    durationMs = dur,
+                                    title = mediaTitle.substringBefore(" — "),
+                                    poster = mediaPoster,
+                                    backdrop = mediaBackdrop
+                                )
+                            }
+                            JewEngineManager.releasePlayback(playbackSession)
                         }
-                        JewEngineManager.releasePlayback(playbackSession)
                     }
                     Player.STATE_IDLE -> hideBuffering()
                 }
@@ -508,30 +563,44 @@ class PlayerActivity : Activity() {
 
             override fun onPlayerError(error: PlaybackException) {
                 if (disposed) return
-                val position=player?.currentPosition ?: 0L
-                val recoverable=error.errorCode in 2000..2999
-                if(recoverable && recoveryAttempts<2){
+                if (isLiveTv && error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                    showBuffering("Resyncing live stream...")
+                    player?.seekToDefaultPosition()
+                    player?.prepare()
+                    player?.playWhenReady = true
+                    return
+                }
+                val position = if (isLiveTv) 0L else (player?.currentPosition ?: 0L)
+                val recoverable = error.errorCode in 2000..2999
+                if (recoverable && recoveryAttempts < 2) {
                     recoveryAttempts++
-                    val generation=requestGeneration.get()
+                    val generation = requestGeneration.get()
                     showBuffering("Reconnecting · attempt $recoveryAttempts of 2")
                     mainHandler.postDelayed({
-                        if(!disposed && !isFinishing && requestGeneration.get()==generation){
-                            player?.seekTo(position);player?.prepare();player?.playWhenReady=true
+                        if (!disposed && !isFinishing && requestGeneration.get() == generation) {
+                            if (isLiveTv) player?.seekToDefaultPosition() else player?.seekTo(position)
+                            player?.prepare()
+                            player?.playWhenReady = true
                         }
-                    }, (recoveryAttempts*1000).toLong())
-                } else if(currentStreamIndex+1<availableStreams.size){
-                    activeStream?.let { SourceHealth.record(this@PlayerActivity,it,false) }
+                    }, (recoveryAttempts * 1000).toLong())
+                } else if (currentStreamIndex + 1 < availableStreams.size) {
+                    activeStream?.let { SourceHealth.record(this@PlayerActivity, it, false) }
                     currentStreamIndex++
-                    playStreamItem(availableStreams[currentStreamIndex],position)
+                    playStreamItem(availableStreams[currentStreamIndex], position)
                 } else {
-                    activeStream?.let { SourceHealth.record(this@PlayerActivity,it,false) }
-                    hideBuffering();showHud();errorDialog?.dismiss()
-                    errorDialog=AlertDialog.Builder(this@PlayerActivity)
+                    activeStream?.let { SourceHealth.record(this@PlayerActivity, it, false) }
+                    hideBuffering(); showHud(); errorDialog?.dismiss()
+                    errorDialog = AlertDialog.Builder(this@PlayerActivity)
                         .setTitle("Playback interrupted")
-                        .setMessage("This source could not continue. Your position is saved.")
-                        .setPositiveButton("Retry"){_,_->recoveryAttempts=0;player?.prepare();player?.playWhenReady=true}
-                        .setNeutralButton("Sources"){_,_->showSourcesMenu()}
-                        .setNegativeButton("Back"){_,_->finish()}.show()
+                        .setMessage("This source could not continue. Try another feed or retry.")
+                        .setPositiveButton("Retry") { _, _ ->
+                            recoveryAttempts = 0
+                            if (isLiveTv) player?.seekToDefaultPosition()
+                            player?.prepare()
+                            player?.playWhenReady = true
+                        }
+                        .setNeutralButton("Sources") { _, _ -> showSourcesMenu() }
+                        .setNegativeButton("Back") { _, _ -> finish() }.show()
                 }
             }
 
@@ -656,6 +725,11 @@ class PlayerActivity : Activity() {
         }
 
         btnPrev.setOnClickListener {
+            if (isLiveTv && liveChannelList.size > 1) {
+                zapLiveChannel(-1)
+                scheduleHideHud()
+                return@setOnClickListener
+            }
             if(broadcastItems.isNotEmpty()){playBroadcast(broadcastIndex-1);return@setOnClickListener}
             if (!mediaType.equals("movie", ignoreCase = true) && episodeNum > 1) {
                 saveCurrentPlaybackState()
@@ -669,6 +743,11 @@ class PlayerActivity : Activity() {
         }
 
         btnNext.setOnClickListener {
+            if (isLiveTv && liveChannelList.size > 1) {
+                zapLiveChannel(1)
+                scheduleHideHud()
+                return@setOnClickListener
+            }
             if(broadcastItems.isNotEmpty()){playBroadcast(broadcastIndex+1);return@setOnClickListener}
             if (!mediaType.equals("movie", ignoreCase = true)) {
                 saveCurrentPlaybackState()
@@ -732,7 +811,26 @@ class PlayerActivity : Activity() {
             }
 
             when (event.keyCode) {
+                KeyEvent.KEYCODE_CHANNEL_UP -> {
+                    if (isLiveTv && liveChannelList.size > 1) {
+                        zapLiveChannel(1)
+                        return true
+                    }
+                }
+
+                KeyEvent.KEYCODE_CHANNEL_DOWN -> {
+                    if (isLiveTv && liveChannelList.size > 1) {
+                        zapLiveChannel(-1)
+                        return true
+                    }
+                }
+
                 KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    if (isLiveTv && !isHudVisible) {
+                        showHud()
+                        btnPrev.requestFocus()
+                        return true
+                    }
                     if (seekBar.hasFocus()) {
                         handleSeekBarScrub(isForward = false)
                         return true
@@ -958,20 +1056,30 @@ class PlayerActivity : Activity() {
         playMediaInternal(url, audioUrl, currentSubtitleConfig, resumePositionMs)
     }
 
+    private fun zapLiveChannel(delta: Int) {
+        if (liveChannelList.isEmpty()) return
+        liveChannelIdx = (liveChannelIdx + delta + liveChannelList.size) % liveChannelList.size
+        val nextCh = liveChannelList[liveChannelIdx]
+        mediaId = "live_${nextCh.id}"
+        mediaTitle = nextCh.name
+        findViewById<TitleLoadingView>(R.id.loadingTitle).text = nextCh.name
+        availableStreams = LiveTvRepository.toStreamItems(nextCh)
+        currentStreamIndex = 0
+        updateHeaderTitle()
+        showSeekOsd("CH ${liveChannelIdx + 1}: ${nextCh.name}")
+        if (availableStreams.isNotEmpty()) {
+            playStreamItem(availableStreams[0], 0L)
+        }
+    }
+
     private fun playMediaInternal(
         videoUrl: String,
         audioUrl: String?,
         subConfig: MediaItem.SubtitleConfiguration?,
         resumePositionMs: Long
     ) {
-        if(disposed)return
+        if (disposed) return
         val p = player ?: return
-        val factory = if(broadcastItems.isNotEmpty()||ArabicBroadcasts.headers(videoUrl).isNotEmpty()) {
-            val http=DefaultHttpDataSource.Factory().setUserAgent("Mozilla/5.0")
-                .setAllowCrossProtocolRedirects(true).setDefaultRequestProperties(ArabicBroadcasts.headers(videoUrl))
-            DefaultMediaSourceFactory(DefaultDataSource.Factory(this,PlaybackCache.factory(this,http)))
-        } else mediaSourceFactory ?: return
-        val dsf = dataSourceFactory ?: return
 
         currentPlayingUri = videoUrl
         currentAudioUri = audioUrl
@@ -980,6 +1088,39 @@ class PlayerActivity : Activity() {
 
         p.stop()
         p.clearMediaItems()
+
+        if (isLiveTv) {
+            // 100% UNCACHED LIVE HTTP PIPELINE — NEVER passes through PlaybackCache/SimpleCache!
+            val liveHttpFactory = DefaultHttpDataSource.Factory()
+                .setAllowCrossProtocolRedirects(true)
+                .setUserAgent("TiviMate/4.7.0 (Linux; Android 11; Shield Android TV)")
+                .setDefaultRequestProperties(mapOf("Cache-Control" to "no-cache", "Pragma" to "no-cache"))
+                .setConnectTimeoutMs(15_000)
+                .setReadTimeoutMs(20_000)
+            val lowUrl = videoUrl.lowercase(Locale.US)
+            val liveSource: MediaSource = if (lowUrl.contains(".m3u8") || lowUrl.contains("jmp2.uk") || lowUrl.contains("/hls/")) {
+                HlsMediaSource.Factory(liveHttpFactory)
+                    .setAllowChunklessPreparation(true)
+                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(12))
+                    .createMediaSource(MediaItem.fromUri(Uri.parse(videoUrl)))
+            } else {
+                DefaultMediaSourceFactory(liveHttpFactory)
+                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(12))
+                    .createMediaSource(MediaItem.fromUri(Uri.parse(videoUrl)))
+            }
+            p.setMediaSource(liveSource)
+            p.prepare()
+            p.playWhenReady = true
+            scheduleHideHud()
+            return
+        }
+
+        val factory = if (broadcastItems.isNotEmpty() || ArabicBroadcasts.headers(videoUrl).isNotEmpty()) {
+            val http = DefaultHttpDataSource.Factory().setUserAgent("Mozilla/5.0")
+                .setAllowCrossProtocolRedirects(true).setDefaultRequestProperties(ArabicBroadcasts.headers(videoUrl))
+            DefaultMediaSourceFactory(DefaultDataSource.Factory(this, PlaybackCache.factory(this, http)))
+        } else mediaSourceFactory ?: return
+        val dsf = dataSourceFactory ?: return
 
         val rawVideoSource: MediaSource = factory.createMediaSource(MediaItem.fromUri(Uri.parse(videoUrl)))
         val baseSource: MediaSource = if (!audioUrl.isNullOrEmpty()) {
@@ -1466,6 +1607,7 @@ class PlayerActivity : Activity() {
     }
 
     private fun saveCurrentPlaybackState() {
+        if (isLiveTv) return
         val p = player ?: return
         val pos = p.currentPosition
         val dur = p.duration
@@ -1551,6 +1693,35 @@ class PlayerActivity : Activity() {
         private var pendingStreams: List<StreamItem>? = null
         @Volatile
         private var pendingStreamIndex: Int = 0
+        @Volatile
+        private var pendingLiveChannels: List<LiveChannelItem> = emptyList()
+        @Volatile
+        private var pendingLiveChannelIndex: Int = 0
+
+        fun startLive(
+            context: Context,
+            channels: List<LiveChannelItem>,
+            channelIndex: Int,
+            feedIndex: Int = 0
+        ) {
+            val safeChIdx = channelIndex.coerceIn(0, (channels.size - 1).coerceAtLeast(0))
+            val ch = channels.getOrNull(safeChIdx) ?: return
+            pendingLiveChannels = channels
+            pendingLiveChannelIndex = safeChIdx
+            val streams = LiveTvRepository.toStreamItems(ch)
+            start(
+                context = context,
+                type = "movie",
+                id = "live_${ch.id}",
+                title = ch.name,
+                season = 1,
+                episode = 1,
+                poster = ch.logo,
+                backdrop = ch.logo,
+                preloadedStreams = streams,
+                selectedStreamIndex = feedIndex.coerceIn(0, (streams.size - 1).coerceAtLeast(0))
+            )
+        }
 
         fun start(
             context: Context,
